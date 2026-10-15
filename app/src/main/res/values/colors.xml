@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Backgrounds (Telegram Mini-App / EdChess Theme) -->
+    <color name="bg_dark">#0E131F</color>
+    <color name="bg_card">#1A2234</color>
+    <color name="bg_card_secondary">#242D42</color>
+    <color name="bg_card_elevated">#2D3850</color>
+
+    <!-- Brand Romantic & Playful Palette -->
+    <color name="pink_primary">#FF4E78</color>
+    <color name="pink_primary_variant">#D9365E</color>
+    <color name="pink_soft">#33FF4E78</color>
+
+    <!-- Accent Secondary (Mint & Amber) -->
+    <color name="mint_accent">#00D2A0</color>
+    <color name="mint_soft">#3300D2A0</color>
+    <color name="amber_warning">#FFB800</color>
+    <color name="amber_soft">#33FFB800</color>
+
+    <!-- Text & States -->
+    <color name="text_primary">#F5F7FB</color>
+    <color name="text_secondary">#8E9CAE</color>
+    <color name="text_disabled">#4A5568</color>
+    <color name="border_subtle">#2D3748</color>
+    <color name="border_active">#FF4E78</color>
+
+    <!-- System -->
+    <color name="white">#FFFFFF</color>
+    <color name="transparent">#00000000</color>
+    <color name="scrim_dark">#990E131F</color>
+</resources>

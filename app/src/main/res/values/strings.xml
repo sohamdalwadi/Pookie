@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pookie</string>
+
+    <!-- Splash & Setup -->
+    <string name="splash_tagline">Couples Mini-Game Arena</string>
+    <string name="btn_get_started">Get Started</string>
+    <string name="backend_setup_title">Backend Configuration</string>
+    <string name="backend_setup_desc">Connect your Pookie serverless backend to sync games and reactions.</string>
+    <string name="label_deployment_id">Deployment ID or Web App URL</string>
+    <string name="hint_deployment_id">AKfycbx...</string>
+    <string name="btn_test_and_save">Test &amp; Save Backend</string>
+    <string name="btn_how_to_setup">How to get this ID?</string>
+    <string name="backend_connected_success">Backend connected successfully</string>
+    <string name="backend_connection_failed">Could not connect to backend. Verify your ID.</string>
+
+    <!-- Couple Profile Setup -->
+    <string name="profile_setup_title">Couple Profile</string>
+    <string name="profile_setup_desc">Choose nicknames and select your couple vibe.</string>
+    <string name="label_my_nickname">Your Nickname</string>
+    <string name="hint_my_nickname">e.g. Alex</string>
+    <string name="label_partner_nickname">Partner Nickname</string>
+    <string name="hint_partner_nickname">e.g. Sam</string>
+    <string name="label_select_vibe">Select Couple Vibe</string>
+    <string name="btn_save_profile">Enter Arena</string>
+    <string name="btn_randomize_dice">Randomize</string>
+
+    <!-- Couple Vibe Tags (Emojis allowed ONLY here) -->
+    <string name="vibe_foodies">🍕 Foodies</string>
+    <string name="vibe_binge">🎬 Binge Buddies</string>
+    <string name="vibe_travelers">✈️ Travelers</string>
+    <string name="vibe_gamers">🎮 Gamers</string>
+    <string name="vibe_coffee">☕ Coffee Lovers</string>
+
+    <!-- Lobby Hub -->
+    <string name="lobby_title">Game Lobby</string>
+    <string name="section_create_room">Create New Room</string>
+    <string name="section_join_room">Join Partner Room</string>
+    <string name="hint_room_code">PK-XXXX</string>
+    <string name="btn_create_room">Create Room</string>
+    <string name="btn_join_room">Join Room</string>
+    <string name="game_tictactoe_title">Tic-Tac-Toe</string>
+    <string name="game_tictactoe_desc">Classic 3x3 duel with Drawbreaker</string>
+    <string name="game_dots_boxes_title">Dots &amp; Boxes</string>
+    <string name="game_dots_boxes_desc">Claim territory and chain turns</string>
+    <string name="game_quiz_title">Couples Icebreaker</string>
+    <string name="game_quiz_desc">Test couple harmony with 5 questions</string>
+
+    <!-- Game Arena -->
+    <string name="turn_your_turn">Your Turn</string>
+    <string name="turn_partner_turn">Partner Thinking...</string>
+    <string name="status_waiting_partner">Waiting for partner to join...</string>
+    <string name="room_code_label">Room Code</string>
+    <string name="btn_copy_code">Copy Code</string>
+    <string name="btn_show_qr">Show QR</string>
+    <string name="code_copied">Room code copied to clipboard</string>
+    <string name="btn_leave">Leave</string>
+
+    <!-- Rematch & Results -->
+    <string name="result_victory">Victory!</string>
+    <string name="result_defeat">Good Game!</string>
+    <string name="result_draw">Stalemate!</string>
+    <string name="btn_request_rematch">Rematch</string>
+    <string name="rematch_waiting">Waiting for partner...</string>
+    <string name="rematch_both_ready">Rematch starting!</string>
+    <string name="date_night_card_title">Date Night Scrapbook</string>
+    <string name="btn_share_card">Share Card</string>
+
+    <!-- Settings & OTA -->
+    <string name="settings_title">Settings</string>
+    <string name="sound_effects">Sound Effects</string>
+    <string name="ota_check_update">Check for Updates</string>
+    <string name="ota_up_to_date">App is up to date</string>
+    <string name="ota_update_available">New update available</string>
+    <string name="btn_download_update">Update Now</string>
+    <string name="version_info">Version 1.0.0</string>
+</resources>
