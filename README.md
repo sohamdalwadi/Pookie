@@ -50,6 +50,7 @@ All engineering blueprints have been mapped out prior to code implementation:
 | 📐 **[Vector Icon System & Assets](docs/design/VECTOR_ICON_SYSTEM.md)** | Complete simple geometric SVG icon suite, Android VectorDrawables, and zero-emoji specs. |
 | 🔑 **[Finding Your Deployment ID & URL](docs/architecture/BACKEND_ID_EXTRACTION_GUIDE.md)** | Visual guide on locating your Google Apps Script Deployment ID in browser or CLI. |
 | ⚡ **[Game Mechanics, Reactions & Moods](docs/architecture/GAME_MECHANICS_AND_REACTIONS.md)** | Scoring rules, live floating reaction vectors, and dynamic relationship mood engine. |
+| 📸 **[Couple Scrapbook & Memory Cards](docs/architecture/COUPLE_SCRAPBOOK_AND_SUMMARY.md)** | Date-night session recaps, custom superlatives, and exportable social cards. |
 | 🎨 **[Game Animations & Physics Specs](docs/architecture/GAME_ANIMATIONS_SPECIFICATION.md)** | Spring physics, vector mark drawing, 3D card flips, and particle confetti systems. |
 | 🎬 **[UI Screen Flow & Motion Transitions](docs/architecture/UI_TRANSITION_ARCHITECTURE.md)** | Complete 7-screen flow graph, shared element transitions, motion curves, and haptic audio specs. |
 | 📱 **[In-App Backend Setup & OTA Updates](docs/architecture/IN_APP_BACKEND_SETUP_AND_OTA.md)** | Dynamic in-app backend linking, QR server sharing, and GitHub-powered OTA APK updates. |

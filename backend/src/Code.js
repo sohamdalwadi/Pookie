@@ -166,6 +166,8 @@ function doPost(e) {
         return handleResetGame(payload);
       case "START_QUIZ":
         return handleStartQuiz(payload);
+      case "SEND_REACTION":
+        return handleSendReaction(payload);
       default:
         return jsonError("INVALID_ACTION", "Unrecognized POST action: " + action);
     }
@@ -193,11 +195,12 @@ function generateUniqueRoomCode(sheet) {
 }
 
 function findRoomRowIndex(sheet, roomCode) {
+  const cleanCode = (roomCode || "").toString().replace(/[\s-]/g, '').toUpperCase();
   const lastRow = sheet.getLastRow();
   if (lastRow <= 1) return -1;
   const codes = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
   for (let i = 0; i < codes.length; i++) {
-    if (codes[i][0] && codes[i][0].toString().toUpperCase() === roomCode.toString().toUpperCase()) {
+    if (codes[i][0] && codes[i][0].toString().replace(/[\s-]/g, '').toUpperCase() === cleanCode) {
       return i + 2; // 1-indexed row number in Google Sheet
     }
   }
@@ -461,6 +464,15 @@ function handleMakeMove(payload) {
       room.gameState = result.nextState;
     }
 
+    if (payload.reaction) {
+      if (!room.gameState) room.gameState = {};
+      room.gameState.lastReaction = {
+        type: payload.reaction,
+        sender: playerRole,
+        timestamp: new Date().toISOString()
+      };
+    }
+
     room.lastActivity = new Date().toISOString();
     room.version += 1;
 
@@ -561,6 +573,46 @@ function handleStartQuiz(payload) {
 
     sheet.getRange(rowIndex, 1, 1, 15).setValues([roomObjectToRow(room)]);
     return jsonSuccess(room);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function handleSendReaction(payload) {
+  const roomCode = (payload.roomCode || "").toString().replace(/[\s-]/g, '').toUpperCase();
+  const playerId = payload.playerId;
+  const reactionType = payload.reaction || "HEART";
+
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(3000)) return jsonError("CONCURRENCY_TIMEOUT", "Server busy.");
+
+  try {
+    const ss = getDatabaseSpreadsheet();
+    const sheet = ss.getSheetByName("Rooms");
+    const rowIndex = findRoomRowIndex(sheet, roomCode);
+    if (rowIndex === -1) return jsonError("ROOM_NOT_FOUND", "Room not found.");
+
+    const row = sheet.getRange(rowIndex, 1, 1, 15).getValues()[0];
+    const room = rowToRoomObject(row);
+
+    const isHost = (playerId === room.host.id);
+    const isPartner = (room.partner && playerId === room.partner.id);
+    if (!isHost && !isPartner) return jsonError("UNAUTHORIZED", "Player not in room.");
+
+    const playerRole = isHost ? "HOST" : "PARTNER";
+
+    if (!room.gameState) room.gameState = {};
+    room.gameState.lastReaction = {
+      type: reactionType,
+      sender: playerRole,
+      timestamp: new Date().toISOString()
+    };
+
+    room.lastActivity = new Date().toISOString();
+    room.version += 1;
+
+    sheet.getRange(rowIndex, 1, 1, 15).setValues([roomObjectToRow(room)]);
+    return jsonSuccess({ success: true, lastReaction: room.gameState.lastReaction, version: room.version });
   } finally {
     lock.releaseLock();
   }
