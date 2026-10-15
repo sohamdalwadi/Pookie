@@ -36,6 +36,8 @@ All engineering blueprints have been mapped out prior to code implementation:
 
 | Document | Description |
 | :--- | :--- |
+| 🚀 **[Quickstart & Setup Guide](docs/SETUP_GUIDE.md)** | Step-by-step 3-minute self-hosting guide for forkers and contributors. |
+| 🔐 **[Dynamic Binding & Security](docs/architecture/DYNAMIC_BINDING_AND_SECURITY.md)** | Zero-hardcoding architecture, container binding, and client config abstraction. |
 | 📄 **[Master Technical Specification](docs/architecture/TECHNICAL_SPEC.md)** | End-to-end architectural design, schemas, API contracts, lifecycles, and FSM. |
 | 🗄️ **[Database Schema Blueprint](docs/architecture/DATABASE_SCHEMA.md)** | Exact Google Sheets visual layout, columns, types, and single-cell JSON serialization. |
 | 🌐 **[REST API Specification](docs/architecture/API_SPEC.md)** | Complete request/response contracts for `CREATE_ROOM`, `JOIN_ROOM`, `GET_STATE`, `MAKE_MOVE`, and `RESET_GAME`. |
@@ -43,6 +45,26 @@ All engineering blueprints have been mapped out prior to code implementation:
 | 🧹 **[Auto-Cleanup & Cron](docs/architecture/CLEANUP_CRON.md)** | Pseudocode, 30-minute inactivity thresholds, and batch memory row cleanup. |
 | 🗺️ **[Development Roadmap](docs/ROADMAP.md)** | Phased engineering timeline from planning through launch. |
 | 🤝 **[Contributing with Antigravity](docs/CONTRIBUTING.md)** | Guide to adding new games and features using Antigravity AI agents without Android knowledge! |
+
+---
+
+## ⚡ 3-Minute Quickstart (Self-Hosting for Forkers)
+
+Pookie is built with a **100% generic, zero-hardcoding architecture**. When you fork Pookie, you deploy your own private backend on your Google Drive at zero cost:
+
+1. **Create your Google Sheet:** Go to [sheets.new](https://sheets.new) and open **Extensions > Apps Script**.
+2. **Deploy as Web App:** Paste the backend script, run `bootstrapDatabase` once (auto-creates tabs & questions), and deploy as Web App (`Execute as: Me`, `Access: Anyone`).
+3. **Configure your Client:**
+   ```bash
+   cp app/config.template.json app/config.json
+   ```
+   Paste your generated Web App URL into `app/config.json`:
+   ```json
+   {
+     "POOKIE_API_URL": "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
+   }
+   ```
+4. **Compile & Play:** Your app now talks exclusively to your private Google Sheet database. `config.json` is ignored by Git to keep your endpoint private.
 
 ---
 
