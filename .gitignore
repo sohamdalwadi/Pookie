@@ -39,3 +39,6 @@ config.json
 .env
 .env.local
 .clasp.json
+.clasprc.json
+**/.clasp.json
+**/.clasprc.json

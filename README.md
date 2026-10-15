@@ -37,6 +37,7 @@ All engineering blueprints have been mapped out prior to code implementation:
 | Document | Description |
 | :--- | :--- |
 | 🚀 **[Quickstart & Setup Guide](docs/SETUP_GUIDE.md)** | Step-by-step 3-minute self-hosting guide for forkers with Mermaid diagrams. |
+| 🛠️ **[Clasp CLI Developer Guide](docs/CLASP_CLI_GUIDE.md)** | Local development, pushing scripts, and webapp deployments via Google Clasp. |
 | 🔐 **[Dynamic Binding & Security](docs/architecture/DYNAMIC_BINDING_AND_SECURITY.md)** | Zero-hardcoding architecture, container binding, and client config abstraction. |
 | 📄 **[Master Technical Specification](docs/architecture/TECHNICAL_SPEC.md)** | End-to-end architectural design, schemas, API contracts, lifecycles, and FSM. |
 | 🗄️ **[Database Schema Blueprint](docs/architecture/DATABASE_SCHEMA.md)** | Exact Google Sheets visual layout, columns, types, and single-cell JSON serialization. |
