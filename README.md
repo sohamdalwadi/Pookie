@@ -47,6 +47,11 @@ All engineering blueprints have been mapped out prior to code implementation:
 | 🤖 **[AI Quiz Architecture (Gemini Free)](docs/games/AI_QUIZ_ARCHITECTURE.md)** | Single-side Host API key generation, zero-friction sync, and dynamic couple prompts. |
 | 🔒 **[Couple Profile & Zero-PII Privacy](docs/architecture/COUPLE_PROFILE_AND_PRIVACY.md)** | In-app nicknames, relation tags, dynamic chemistry scoring, and LLM privacy redaction. |
 | 🎨 **[UI/UX Design Specification](docs/architecture/UI_UX_SPECIFICATION.md)** | Telegram Mini-App (EdChess) aesthetics, vector-first design, and dice randomizer. |
+| 🔑 **[Finding Your Deployment ID & URL](docs/architecture/BACKEND_ID_EXTRACTION_GUIDE.md)** | Visual guide on locating your Google Apps Script Deployment ID in browser or CLI. |
+| ⚡ **[Game Mechanics, Reactions & Moods](docs/architecture/GAME_MECHANICS_AND_REACTIONS.md)** | Scoring rules, live floating reaction vectors, and dynamic relationship mood engine. |
+| 🎨 **[Game Animations & Physics Specs](docs/architecture/GAME_ANIMATIONS_SPECIFICATION.md)** | Spring physics, vector mark drawing, 3D card flips, and particle confetti systems. |
+| 🎬 **[UI Screen Flow & Motion Transitions](docs/architecture/UI_TRANSITION_ARCHITECTURE.md)** | Complete 7-screen flow graph, shared element transitions, motion curves, and haptic audio specs. |
+| 📱 **[In-App Backend Setup & OTA Updates](docs/architecture/IN_APP_BACKEND_SETUP_AND_OTA.md)** | Dynamic in-app backend linking, QR server sharing, and GitHub-powered OTA APK updates. |
 | 🤖 **[CI/CD & Tag Release Guide](docs/CI_CD_RELEASE_GUIDE.md)** | Automated GitHub Actions compile checks and tag-based release pipeline. |
 | 🗺️ **[Development Roadmap](docs/ROADMAP.md)** | Phased engineering timeline from planning through launch. |
 | 🤝 **[Contributing with Antigravity](docs/CONTRIBUTING.md)** | Guide to adding new games and features using Antigravity AI agents without Android knowledge! |
