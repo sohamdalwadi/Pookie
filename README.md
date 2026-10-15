@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Status-Planning%20%26%20Architecture-pink?style=for-the-badge" alt="Status" />
   <img src="https://img.shields.io/badge/Architecture-Anti%20Gravity-blueviolet?style=for-the-badge" alt="Anti Gravity" />
   <img src="https://img.shields.io/badge/Backend-Google%20Apps%20Script%20%2B%20Sheets-success?style=for-the-badge" alt="Google Sheets Backend" />
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License" />
+  <img src="https://img.shields.io/badge/License-Source--Available%20%2F%20Personal%20Free-pink?style=for-the-badge" alt="License" />
 </p>
 
 > **"Because everyday love is made of little turns, playful moves, and shared laughter."**  
@@ -36,13 +36,14 @@ All engineering blueprints have been mapped out prior to code implementation:
 
 | Document | Description |
 | :--- | :--- |
-| 🚀 **[Quickstart & Setup Guide](docs/SETUP_GUIDE.md)** | Step-by-step 3-minute self-hosting guide for forkers and contributors. |
+| 🚀 **[Quickstart & Setup Guide](docs/SETUP_GUIDE.md)** | Step-by-step 3-minute self-hosting guide for forkers with Mermaid diagrams. |
 | 🔐 **[Dynamic Binding & Security](docs/architecture/DYNAMIC_BINDING_AND_SECURITY.md)** | Zero-hardcoding architecture, container binding, and client config abstraction. |
 | 📄 **[Master Technical Specification](docs/architecture/TECHNICAL_SPEC.md)** | End-to-end architectural design, schemas, API contracts, lifecycles, and FSM. |
 | 🗄️ **[Database Schema Blueprint](docs/architecture/DATABASE_SCHEMA.md)** | Exact Google Sheets visual layout, columns, types, and single-cell JSON serialization. |
 | 🌐 **[REST API Specification](docs/architecture/API_SPEC.md)** | Complete request/response contracts for `CREATE_ROOM`, `JOIN_ROOM`, `GET_STATE`, `MAKE_MOVE`, and `RESET_GAME`. |
 | 🔄 **[State Machines & Polling](docs/architecture/STATE_MACHINES.md)** | Client FSM, turn handshakes, and 4-tier adaptive heartbeat engine to preserve battery and Google API quota. |
 | 🧹 **[Auto-Cleanup & Cron](docs/architecture/CLEANUP_CRON.md)** | Pseudocode, 30-minute inactivity thresholds, and batch memory row cleanup. |
+| 🤖 **[CI/CD & Tag Release Guide](docs/CI_CD_RELEASE_GUIDE.md)** | Automated GitHub Actions compile checks and tag-based release pipeline. |
 | 🗺️ **[Development Roadmap](docs/ROADMAP.md)** | Phased engineering timeline from planning through launch. |
 | 🤝 **[Contributing with Antigravity](docs/CONTRIBUTING.md)** | Guide to adding new games and features using Antigravity AI agents without Android knowledge! |
 
@@ -51,6 +52,14 @@ All engineering blueprints have been mapped out prior to code implementation:
 ## ⚡ 3-Minute Quickstart (Self-Hosting for Forkers)
 
 Pookie is built with a **100% generic, zero-hardcoding architecture**. When you fork Pookie, you deploy your own private backend on your Google Drive at zero cost:
+
+```mermaid
+graph LR
+    A[Fork Repo] --> B[sheets.new]
+    B --> C[Deploy Web App]
+    C --> D[Paste URL in app/config.json]
+    D --> E[Play with Partner!]
+```
 
 1. **Create your Google Sheet:** Go to [sheets.new](https://sheets.new) and open **Extensions > Apps Script**.
 2. **Deploy as Web App:** Paste the backend script, run `bootstrapDatabase` once (auto-creates tabs & questions), and deploy as Web App (`Execute as: Me`, `Access: Anyone`).
@@ -68,42 +77,14 @@ Pookie is built with a **100% generic, zero-hardcoding architecture**. When you 
 
 ---
 
-## 🏗️ High-Level System Architecture
-
-```
-┌────────────────────────────────────────────────────────┐
-│             POOKIE CLIENT (ANTI GRAVITY)               │
-│                                                        │
-│  ┌────────────────┐  Adaptive Polling  ┌────────────┐  │
-│  │ State Machine  │◄──────────────────►│ UI / Views │  │
-│  └───────┬────────┘    (Opponent Turn) └────────────┘  │
-└──────────┼─────────────────────────────────────────────┘
-           │ HTTPS (REST)
-           │ GET / POST (JSON Payload + ETag Versioning)
-           ▼
-┌────────────────────────────────────────────────────────┐
-│      SERVERLESS BACKEND (GOOGLE APPS SCRIPT)           │
-│                                                        │
-│  ┌──────────────────────┐      ┌────────────────────┐  │
-│  │ doGet(e) / doPost(e) │◄────►│ LockService (OCC)  │  │
-│  └──────────┬───────────┘      └────────────────────┘  │
-│             │                                          │
-│             ▼                                          │
-│  ┌──────────────────────┐      ┌────────────────────┐  │
-│  │ Pure Game Reducers   │      │ cleanupInactive    │  │
-│  │ (TTT, Boxes, Quiz)   │      │ Rooms (Cron Trigger│  │
-│  └──────────┬───────────┘      └─────────┬──────────┘  │
-└─────────────┼────────────────────────────┼─────────────┘
-              ▼                            ▼
-┌────────────────────────────────────────────────────────┐
-│           DATABASE (GOOGLE SPREADSHEET)                │
-│                                                        │
-│  ┌──────────────────────┐      ┌────────────────────┐  │
-│  │   'Rooms' Sheet      │      │ 'QuizQuestions'    │  │
-│  │ (Serialized Boards)  │      │   Question Bank    │  │
-│  └──────────────────────┘      └────────────────────┘  │
-└────────────────────────────────────────────────────────┘
-```
+## 🔒 Protected Branch & Contribution Workflow
+The `main` branch of this repository is **protected**. Direct pushes to `main` are disabled to maintain code quality.
+To contribute:
+1. **Fork** the repository to your GitHub account.
+2. Create a feature branch (`git checkout -b feature/my-new-game`).
+3. Use **Antigravity** and our built-in skills to build your feature effortlessly.
+4. Push your branch and open a **Pull Request** against `main`.
+5. Automated CI will validate your code before the maintainer reviews and merges it!
 
 ---
 
@@ -118,5 +99,27 @@ Antigravity will understand the board serialization, state machine, and API cont
 
 ---
 
-## 📜 License
-Distributed under the MIT License. See `LICENSE` for details.
+## 👥 Contributors
+
+Thanks to all the lovely people who contribute to Pookie! This section updates automatically whenever a new contributor's pull request is merged:
+
+<p align="center">
+  <a href="https://github.com/sohamdalwadi/Pookie/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=sohamdalwadi/Pookie" alt="Pookie Contributors" />
+  </a>
+</p>
+
+Want to see your avatar here? Check out our [Contributing Guide](docs/CONTRIBUTING.md) to add a mini-game or improve the architecture!
+
+---
+
+## 📜 License & Attribution
+
+Copyright (c) 2026 **Soham Dalwadi** ([@sohamdalwadi](https://github.com/sohamdalwadi)).
+
+- **Personal & Educational Use:** **Free** to use, enhance, modify, and play with your partner. All forks and distributions must retain credit to the original creator (**Soham Dalwadi**) with a link to [https://github.com/sohamdalwadi/Pookie](https://github.com/sohamdalwadi/Pookie).
+- **Commercial Use:** Any commercial distribution, monetization, or embedding into paid products is strictly prohibited without prior written authorization. For commercial inquiries, contact:
+  - **Email:** `crzy.pintu@gmail.com`
+  - **Author:** Soham Dalwadi
+
+See the full [LICENSE](LICENSE) file for complete terms.

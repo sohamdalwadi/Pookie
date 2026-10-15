@@ -1,17 +1,47 @@
-MIT License
+POOKIE SOURCE-AVAILABLE & NON-COMMERCIAL LICENSE
 
-Copyright (c) 2026 Soham Dalwadi
+Version 1.0, October 2026
+Copyright (c) 2026 Soham Dalwadi <crzy.pintu@gmail.com>
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Original Concept, Architecture & Design by: Soham Dalwadi
+Project Repository: https://github.com/sohamdalwadi/Pookie
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+==============================================================================
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+==============================================================================
 
+1. GRANT OF LICENSE (PERSONAL & NON-COMMERCIAL USE)
+Subject to the terms and conditions of this License, the Author hereby grants 
+to any person obtaining a copy of this software and associated documentation 
+files (the "Software") a free, non-exclusive, worldwide, royalty-free license to:
+  a) Use, run, and execute the Software for personal, private, and educational purposes.
+  b) Modify, enhance, adapt, and build games upon the Software for personal, non-commercial use.
+  c) Distribute modified or unmodified copies of the Software, provided that:
+     i.  Any distribution includes this complete License text and copyright notice.
+     ii. Prominent credit and attribution are given to the original creator and 
+         architect, Soham Dalwadi, including a visible link to https://github.com/sohamdalwadi/Pookie.
+
+2. COMMERCIAL USE RESTRICTION
+Commercial use of this Software, in whole or in part, is strictly prohibited 
+without prior written authorization from the copyright holder.
+
+"Commercial Use" includes, but is not limited to:
+  - Selling, leasing, or licensing the Software or any derivative work.
+  - Using the Software as a paid service, SaaS, or embedding in a monetized product.
+  - Distributing the Software with in-app purchases, paid ads, or subscriptions.
+
+For commercial licensing, enterprise partnerships, or custom deployment permissions, 
+please contact:
+  Soham Dalwadi
+  Email: crzy.pintu@gmail.com
+  GitHub: https://github.com/sohamdalwadi
+
+3. ATTRIBUTION REQUIREMENT
+All forks, distributions, and public deployments must visibly acknowledge the original 
+author in the application UI (e.g., in an "About" or "Credits" section) with the text:
+"Original architecture and concept by Soham Dalwadi (https://github.com/sohamdalwadi/Pookie)"
+
+4. DISCLAIMER OF WARRANTY
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE

@@ -1,0 +1,36 @@
+name: Pookie CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-specs:
+    name: Validate Specs & Configs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify JSON Template Validity
+        run: |
+          python3 -c "import json; json.load(open('app/config.template.json'))"
+          python3 -c "import json; json.load(open('backend/.clasp.json.example'))"
+          echo "Configuration templates are valid JSON."
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Verify Gradle Setup (If gradlew exists)
+        run: |
+          if [ -f "./gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew --version
+          else
+            echo "Gradle wrapper not yet committed. Skipping build step for planning phase."
+          fi
