@@ -47,3 +47,14 @@ The Couples Icebreaker Quiz is designed to spark intimate conversation, laughter
    - The client triggers a celebratory confetti animation if the answers match.
 3. **Next Question Transition:**
    - Either partner clicks *"Next Question"*, which increments `currentQuestionIndex` and pulls the next question from the question catalog.
+
+---
+
+## 4. 🤖 AI Dynamic Question Generation (Google Gemini Free Tier)
+In addition to the static `QuizQuestions` sheet, Pookie supports **AI-Generated Personalized Questions** powered by Google Gemini (`gemini-1.5-flash` / `gemini-2.5-flash`):
+- **Single-Side API Key:** Only **one partner** (the Host) needs to provide a free Google AI Studio API key.
+- **Client-Side Generation:** The key is kept strictly on the Host's phone (never sent to Google Sheets or the partner).
+- **Custom Couple Vibes:** Host can enter themes like *"Our trip to Japan and silly pet habits"*.
+- **Synchronized Play:** The generated questions are written to the room's `GameState`, so both partners play the exact same custom quiz seamlessly.
+
+👉 Read the full [AI Quiz Architecture Specification](AI_QUIZ_ARCHITECTURE.md).

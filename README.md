@@ -43,6 +43,7 @@ All engineering blueprints have been mapped out prior to code implementation:
 | 🌐 **[REST API Specification](docs/architecture/API_SPEC.md)** | Complete request/response contracts for `CREATE_ROOM`, `JOIN_ROOM`, `GET_STATE`, `MAKE_MOVE`, and `RESET_GAME`. |
 | 🔄 **[State Machines & Polling](docs/architecture/STATE_MACHINES.md)** | Client FSM, turn handshakes, and 4-tier adaptive heartbeat engine to preserve battery and Google API quota. |
 | 🧹 **[Auto-Cleanup & Cron](docs/architecture/CLEANUP_CRON.md)** | Pseudocode, 30-minute inactivity thresholds, and batch memory row cleanup. |
+| 🤖 **[AI Quiz Architecture (Gemini Free)](docs/games/AI_QUIZ_ARCHITECTURE.md)** | Single-side Host API key generation, zero-friction sync, and dynamic couple prompts. |
 | 🤖 **[CI/CD & Tag Release Guide](docs/CI_CD_RELEASE_GUIDE.md)** | Automated GitHub Actions compile checks and tag-based release pipeline. |
 | 🗺️ **[Development Roadmap](docs/ROADMAP.md)** | Phased engineering timeline from planning through launch. |
 | 🤝 **[Contributing with Antigravity](docs/CONTRIBUTING.md)** | Guide to adding new games and features using Antigravity AI agents without Android knowledge! |
