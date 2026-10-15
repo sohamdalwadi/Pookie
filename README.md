@@ -45,6 +45,7 @@ All engineering blueprints have been mapped out prior to code implementation:
 | 🧹 **[Auto-Cleanup & Cron](docs/architecture/CLEANUP_CRON.md)** | Pseudocode, 30-minute inactivity thresholds, and batch memory row cleanup. |
 | 🤖 **[AI Quiz Architecture (Gemini Free)](docs/games/AI_QUIZ_ARCHITECTURE.md)** | Single-side Host API key generation, zero-friction sync, and dynamic couple prompts. |
 | 🔒 **[Couple Profile & Zero-PII Privacy](docs/architecture/COUPLE_PROFILE_AND_PRIVACY.md)** | In-app nicknames, relation tags, dynamic chemistry scoring, and LLM privacy redaction. |
+| 🎨 **[UI/UX Design Specification](docs/architecture/UI_UX_SPECIFICATION.md)** | Telegram Mini-App (EdChess) aesthetics, vector-first design, and dice randomizer. |
 | 🤖 **[CI/CD & Tag Release Guide](docs/CI_CD_RELEASE_GUIDE.md)** | Automated GitHub Actions compile checks and tag-based release pipeline. |
 | 🗺️ **[Development Roadmap](docs/ROADMAP.md)** | Phased engineering timeline from planning through launch. |
 | 🤝 **[Contributing with Antigravity](docs/CONTRIBUTING.md)** | Guide to adding new games and features using Antigravity AI agents without Android knowledge! |
