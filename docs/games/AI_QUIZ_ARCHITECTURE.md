@@ -127,3 +127,13 @@ The Host's client parses the AI response and sends it to the server in `CREATE_R
 | **Gemini Free Tier rate-limit (HTTP 429)** | The client detects 429 and shows: *"AI is catching its breath! Falling back to classic curated questions."* |
 | **Partner wants to provide the key instead** | Either player can be the *"Quiz Master"* who initiates the AI round. |
 | **Inappropriate / offensive output** | Gemini's default safety filters are enabled; client validates that output fits the standard 4-option schema. |
+
+---
+
+## 🔒 Zero-PII Privacy Protection
+To make questions tailored without exposing private details:
+- **No real names or locations** are sent to the LLM. Only sanitized nicknames (e.g., "Pookie" & "Bubba") and categorical enums (`MARRIED`, `FOODIES`, `PET_PARENTS`) are provided.
+- Real emails, locations, and sensitive data are scrubbed before prompt synthesis.
+- Dynamic chemistry badges (e.g. `🧠 Brainwave Twins`) are calculated locally on the device.
+
+👉 Read the full [Couple Profile & Zero-PII Architecture](../../docs/architecture/COUPLE_PROFILE_AND_PRIVACY.md).
