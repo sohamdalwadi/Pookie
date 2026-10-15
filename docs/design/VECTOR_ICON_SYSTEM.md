@@ -184,6 +184,70 @@ Every icon in Pookie adheres to a strict **Minimalist Vector Design Language** i
 
 ---
 
+### 11. Essential In-Game System Icons
+
+#### A. Bedtime Sound / Haptics Toggle (`ic_sound_on.svg` & `ic_sound_off.svg`):
+*Essential when couples play together late at night in bed!*
+```xml
+<!-- Sound On -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+</svg>
+
+<!-- Sound Off -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+  <line x1="23" y1="9" x2="17" y2="15"/>
+  <line x1="17" y1="9" x2="23" y2="15"/>
+</svg>
+```
+
+#### B. Trophy & Match Winner (`ic_trophy.svg`):
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/>
+  <path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/>
+  <path d="M4 4h16v5a8 8 0 0 1-16 0V4z"/>
+  <line x1="12" y1="17" x2="12" y2="21"/>
+  <line x1="8" y1="21" x2="16" y2="21"/>
+</svg>
+```
+
+#### C. Leave / Exit Room (`ic_leave.svg`):
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+  <polyline points="16 17 21 12 16 7"/>
+  <line x1="21" y1="12" x2="9" y2="12"/>
+</svg>
+```
+
+#### D. Offline & Reconnection Status (`ic_offline.svg`):
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="1" y1="1" x2="23" y2="23"/>
+  <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+  <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+  <path d="M10.71 5.05A16 16 0 0 1 22.58 9"/>
+  <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+  <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+  <line x1="12" y1="20" x2="12.01" y2="20"/>
+</svg>
+```
+
+---
+
+## 🌟 Interactive States (Active / Pressed / Glow)
+
+To achieve the tactile richness of Telegram Mini Apps:
+1. **Default State:** Stroke with `opacity: 0.8`, unfilled background.
+2. **Pressed / Touch-Down:** Micro-scale `scale: 0.94`, spring damping, stroke changes to `#FFFFFF`.
+3. **Active / Selected State (Duotone Glow):**
+   - Background fills with 12% opacity tint of brand color (`fill: rgba(255, 78, 120, 0.12)`).
+   - Outer glow halo: `filter: drop-shadow(0 0 6px rgba(255, 78, 120, 0.4))`.
+
 ## 🛠️ Android VectorDrawable Compatibility
 
 For Android development, every SVG above maps directly to an Android `VectorDrawable` XML:

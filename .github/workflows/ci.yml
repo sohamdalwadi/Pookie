@@ -20,6 +20,11 @@ jobs:
           python3 -c "import json; json.load(open('backend/.clasp.json.example'))"
           echo "Configuration templates are valid JSON."
 
+      - name: Verify Backend JavaScript Syntax
+        run: |
+          node --check backend/src/Code.js
+          echo "backend/src/Code.js passed syntax verification."
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:

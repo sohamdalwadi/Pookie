@@ -56,7 +56,30 @@ sequenceDiagram
 - **Scale:** Pops in at `scale: 0.2`, expands to `scale: 1.2` with spring bounce, floats for 2.2 seconds, and fades out (`opacity: 1.0 -> 0.0`).
 - **Sound & Haptics:** Generates a light pop sound and micro-vibration on both phones.
 
+### 2.1 Quota Optimization: The "Reaction Piggyback" Pattern
+To avoid burning Google Apps Script daily quotas with rapid reaction taps:
+1. **Local Instant Render (0ms Latency):** Tapping a reaction displays it on the sender's phone immediately.
+2. **Piggyback Payload:** The reaction is buffered in local client memory and appended to the next outbound message (`MAKE_MOVE` or periodic `GET_STATE` sync) rather than creating separate network transactions:
+   ```json
+   {
+     "action": "MAKE_MOVE",
+     "payload": {
+       "roomCode": "POOK99",
+       "reaction": "HEART",
+       "move": { "cellIndex": 4 }
+     }
+   }
+   ```
+3. This eliminates standalone HTTP calls while providing instant, responsive couple interaction!
+
 ---
+
+### 2.2 The "Drawbreaker" Anti-Stalemate Mechanic (Tic-Tac-Toe)
+In classic Tic-Tac-Toe, seasoned players often draw repeatedly. To prevent fatigue:
+- **Rule:** If two consecutive matches end in a **DRAW**:
+- **Round 3 activates "Drawbreaker Mode":**
+  - **Option 1 (Reverse Tic-Tac-Toe / Misère):** The player who gets 3 in a row *loses*!
+  - **Option 2 (Speed Question):** A quick 5-second single icebreaker question appears. First to answer gets to take the starting turn on the tie-breaker board!
 
 ## 3. Dynamic Relationship Mood Engine
 
