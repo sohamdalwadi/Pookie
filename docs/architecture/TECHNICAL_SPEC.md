@@ -777,3 +777,36 @@ To ensure zero quota exhaustion and protect mobile battery, the Anti Gravity cli
   - `LIGHTNING` (Competitive energy)
 - **Zero-Emoji Architecture:** All reactions and buttons render pure vector SVGs to maintain clean, modern design standards without platform emoji inconsistencies.
 
+---
+
+## 7. Solo Test Mode AI Bot & Connection Testing Suite
+- **Intelligent Autonomous Opponent (`SoloBotEngine`):**
+  - Enables full single-device testing of all 4 mini-games without requiring two physical phones.
+  - **Tic-Tac-Toe:** AI detects immediate winning lines and blocks human winning threats.
+  - **Dots & Boxes:** AI identifies 3-sided boxes to immediately claim boxes (and chains consecutive turns), and avoids moves that grant easy completions.
+  - **Couples Quiz:** Answers asynchronously with natural simulated delays.
+  - **SoulSync:** Generates cute, relevant answers during answering phase, and submits verdicts (+2/-1) during judging phase.
+- **In-Arena Bot Controller (`btnBotModeSelector`):**
+  - Allows instant testing of network edge cases:
+    1. `Smart AI`: Optimal autonomous moves.
+    2. `Simulate Disconnection`: Emits connection-loss events to verify reconnection alert dialogs.
+    3. `Simulate Timeout`: Idles to test turn countdown expiration and automatic turn handover.
+    4. `Random Chaos`: 25% chance of network lag/dropouts.
+
+---
+
+## 8. Permanent Deployment Architecture & Build-Time Demo Key Encryption
+- **Canonical Permanent Deployment Strategy:**
+  - In Google Apps Script, code updates are always deployed in-place targeting the single permanent deployment via `clasp deploy -i $DEPLOYMENT_ID -d "<description>"`.
+  - All obsolete previous deployments have been undeployed.
+  - The endpoint URL and ID remain 100% constant across all releases, eliminating configuration changes on client devices.
+- **Git-Ignored Secret Source (`local.properties`):**
+  - The permanent deployment ID is stored exclusively in git-ignored `local.properties`: `POOKIE_DEMO_DEPLOYMENT_ID=<YOUR_DEPLOYMENT_ID>`.
+- **Compile-Time Gradle Encryption (`app/build.gradle`):**
+  - During `assembleDebug` / `assembleRelease`, Gradle loads `local.properties`.
+  - If present, Gradle encrypts the raw string with XOR mask `0x5C` and injects `buildConfigField "String", "ENCRYPTED_DEMO_KEY_HEX", "\"${encryptedDemoKeyHex}\""`.
+  - If missing (e.g. clean CI checkout), it defaults to empty string `""` with zero plain-text fallback strings in the repository or compiled `.class` files.
+- **Runtime Decryption (`DebugAuthSecurity`):**
+  - When "Load Demo Backend Key" is tapped in the debug menu, `DebugAuthSecurity.getDemoDeploymentId()` decrypts the hex string in-memory on demand.
+
+

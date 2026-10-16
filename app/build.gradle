@@ -3,6 +3,26 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
+
+def rawDeploymentId = localProperties.getProperty("POOKIE_DEMO_DEPLOYMENT_ID") ?:
+        localProperties.getProperty("demo.deployment.id") ?: ""
+
+byte mask = (byte) 0x5C
+byte[] rawBytes = rawDeploymentId.getBytes("UTF-8")
+StringBuilder hexBuilder = new StringBuilder()
+if (rawBytes.length > 0) {
+    for (int i = 0; i < rawBytes.length; i++) {
+        byte enc = (byte) (rawBytes[i] ^ mask)
+        hexBuilder.append(String.format("%02X", enc & 0xFF))
+    }
+}
+def encryptedDemoKeyHex = hexBuilder.toString()
+
 android {
     namespace 'com.pookie.game'
     compileSdk 34
@@ -15,6 +35,8 @@ android {
         versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "ENCRYPTED_DEMO_KEY_HEX", "\"${encryptedDemoKeyHex}\""
     }
 
     buildTypes {
@@ -39,6 +61,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 

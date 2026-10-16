@@ -40,15 +40,23 @@ interface PookieGameEngine<TState, TMove> {
 }
 ```
 
-### Step 3: Register in Apps Script Backend & CLI Sync
-1. Update the backend route handling in `backend/src/Code.js` to validate the `GameType` enum and invoke the server-side validator.
-2. **CLI-First Backend Sync**: Always push and deploy through the CLI automatically:
-   - `npx -y @google/clasp push -f`
-   - `npx -y @google/clasp deploy -d "<description>"`
-3. **Demo Key Auto-Sync**: Whenever a new deployment is created:
-   - Encrypt the key with XOR mask `0x5C`.
-   - Update `ENCRYPTED_DEMO_KEY` in `DebugAuthSecurity.kt`.
-   - Recompile (`.\gradlew assembleDebug`) and reinstall via ADB (`adb install -r`).
+### Step 3: Register in Apps Script Backend & Permanent CLI Sync
+1. Update backend route handling in `backend/src/Code.js` to validate the `GameType` enum and invoke the server-side validator.
+2. **Permanent Single Deployment Rule**:
+   - Always push through CLI: `npx -y @google/clasp push -f`
+   - **Never create a new deployment ID.** Always update the canonical permanent deployment in-place reading the ID from `local.properties`:
+     ```powershell
+     # Read deployment ID from local.properties
+     $deployId = (Get-Content local.properties | Select-String "POOKIE_DEMO_DEPLOYMENT_ID").ToString().Split("=")[1].Trim()
+     npx -y @google/clasp deploy -i $deployId -d "<description>"
+     ```
+   - The deployment ID and Web App URL stay 100% constant forever, eliminating client configuration churn.
+   - Always explicitly notify the user whenever backend code is pushed/updated.
+3. **Build-Time Demo Key Encryption**:
+   - The permanent deployment ID is stored exclusively in git-ignored `local.properties`: `POOKIE_DEMO_DEPLOYMENT_ID=<YOUR_DEPLOYMENT_ID>`.
+   - `app/build.gradle` automatically encrypts this at compile time using XOR mask `0x5C` and injects `BuildConfig.ENCRYPTED_DEMO_KEY_HEX`.
+   - Plaintext deployment keys must NEVER be hardcoded in `build.gradle` or any tracked documentation files.
+   - Recompile (`cmd /c "set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr&& gradlew.bat assembleDebug"`) and reinstall via ADB.
 
 ### Step 4: Add Client Views & Visual Feedback
 Implement the view components corresponding to the new game state machine. Ensure animations and haptic feedback provide delightful couples interactions.
