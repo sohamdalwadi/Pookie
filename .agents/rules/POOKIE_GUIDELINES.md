@@ -36,7 +36,12 @@ Whenever changes are made to `backend/src/Code.js` or `backend/src/appsscript.js
 - **CLI First Automation Rule**: Always execute clasp actions through the CLI automatically:
   1. `clasp status` to verify tracked files.
   2. `clasp push -f` to push latest code to Google Apps Script.
-  3. `clasp deploy -d "<description>"` or `clasp deploy -i <deploymentId> -V <version> -d "<description>"` to deploy the release.
+  3. **STRICT RULE: NEVER run `clasp deploy` without `-i`**: Extract `POOKIE_DEMO_DEPLOYMENT_ID` from `local.properties` and update the existing permanent deployment:
+     ```powershell
+     $permId = (Get-Content "local.properties" | Where-Object { $_ -match "^POOKIE_DEMO_DEPLOYMENT_ID=" } | ForEach-Object { $_.Split('=')[1] }).Trim()
+     npx @google/clasp deploy -i $permId -d "<description>"
+     ```
+     Running `clasp deploy` without `-i` creates a new deployment ID and is STRICTLY FORBIDDEN.
 - **Demo Key & Secret Management Rule**:
   1. Secrets and deployment keys must reside **exclusively in git-ignored `local.properties`** (`POOKIE_DEMO_DEPLOYMENT_ID=...`).
   2. `app/build.gradle` automatically encrypts this key at compile time using XOR masking (`0x5C`) and injects it into `BuildConfig.ENCRYPTED_DEMO_KEY_HEX`.
