@@ -258,6 +258,23 @@ class GameArenaActivity : AppCompatActivity() {
         textScrapbookPlayers.text = "$hostName  &  $partnerName"
         textScrapbookSummary.text = summary
 
+        // Dynamically award couple vibe tag based on game activity
+        if (room != null) {
+            val currentProfile = ServiceLocator.preferencesRepository.getCoupleProfile()
+            val matchScore = if (room.gameType == GameType.COUPLES_QUIZ) viewModel.quizState.value.matchScore else 1
+            val newTag = com.pookie.game.domain.engine.VibeTagEvaluator.evaluateTag(
+                gameType = room.gameType,
+                isVictory = isVictory,
+                isDraw = isDraw,
+                matchScore = matchScore,
+                currentTag = currentProfile.vibeTag
+            )
+            if (newTag != currentProfile.vibeTag) {
+                ServiceLocator.preferencesRepository.saveCoupleProfile(currentProfile.copy(vibeTag = newTag))
+                Toast.makeText(this, "New Couple Tag Earned: $newTag", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         rematchDialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .setCancelable(false)

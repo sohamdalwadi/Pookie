@@ -15,13 +15,10 @@
     <string name="backend_connection_failed">Could not connect to backend. Verify your ID.</string>
 
     <!-- Couple Profile Setup -->
-    <string name="profile_setup_title">Couple Profile</string>
-    <string name="profile_setup_desc">Choose nicknames and select your couple vibe.</string>
+    <string name="profile_setup_title">Player Profile</string>
+    <string name="profile_setup_desc">Choose your nickname to show in game rooms.</string>
     <string name="label_my_nickname">Your Nickname</string>
     <string name="hint_my_nickname">e.g. Alex</string>
-    <string name="label_partner_nickname">Partner Nickname</string>
-    <string name="hint_partner_nickname">e.g. Sam</string>
-    <string name="label_select_vibe">Select Couple Vibe</string>
     <string name="btn_save_profile">Enter Arena</string>
     <string name="btn_randomize_dice">Randomize</string>
 

@@ -77,86 +77,23 @@
                     android:contentDescription="@string/btn_randomize_dice" />
             </LinearLayout>
 
-            <!-- Partner Nickname -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="@string/label_partner_nickname"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp"
+                android:text="Couple Vibe Tags"
+                android:textColor="@color/mint_accent"
+                android:textSize="13sp"
                 android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/editPartnerNickname"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/bg_rounded_input"
-                android:hint="@string/hint_partner_nickname"
-                android:textColor="@color/text_primary"
-                android:textColorHint="@color/text_disabled"
-                android:paddingHorizontal="16dp"
-                android:singleLine="true"
-                android:textSize="15sp" />
-
-            <!-- Couple Vibe Chips -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/label_select_vibe"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupVibes"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:singleSelection="true">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipFoodies"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/vibe_foodies"
-                    android:textColor="@color/text_primary" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipBinge"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/vibe_binge"
-                    android:textColor="@color/text_primary" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipTravelers"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/vibe_travelers"
-                    android:textColor="@color/text_primary" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipGamers"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/vibe_gamers"
-                    android:textColor="@color/text_primary" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipCoffee"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/vibe_coffee"
-                    android:textColor="@color/text_primary" />
-            </com.google.android.material.chip.ChipGroup>
+                android:layout_marginTop="6dp"
+                android:text="Couple vibe tags are awarded dynamically as you play games, complete couples quizzes, and build memories together."
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:lineSpacingExtra="2dp" />
         </LinearLayout>
 
         <Button

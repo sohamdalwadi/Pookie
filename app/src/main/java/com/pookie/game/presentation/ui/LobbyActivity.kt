@@ -77,11 +77,7 @@ class LobbyActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Extract room code
-            val codeMatch = Regex("(PK[A-Za-z0-9]{4}|[A-Za-z0-9]{6})").find(rawInput)
-            val cleanCode = codeMatch?.value?.uppercase() ?: rawInput
-
-            // If partner pasted a link/text containing host's backend ID, automatically link it!
+            // Extract backend ID if partner shared full payload
             val backendMatch = Regex("AKfycb[a-zA-Z0-9_-]+").find(rawInput)
             if (backendMatch != null) {
                 val extractedBackendId = backendMatch.value
@@ -89,13 +85,19 @@ class LobbyActivity : AppCompatActivity() {
                 Toast.makeText(this, "Partner Backend ID automatically configured!", Toast.LENGTH_SHORT).show()
             }
 
-            viewModel.joinRoom(cleanCode)
-        }
+            // Extract and validate room code format (e.g. PK-1234 or PKABCD)
+            val codeMatch = Regex("(PK-?[A-Za-z0-9]{4}|[A-Za-z0-9]{6})", RegexOption.IGNORE_CASE).find(rawInput)
+            if (codeMatch == null) {
+                AlertDialog.Builder(this)
+                    .setTitle("Invalid Room Code")
+                    .setMessage("Room codes must follow the format PK-XXXX (e.g., PK-1234 or PKABCD).")
+                    .setPositiveButton("OK", null)
+                    .show()
+                return@setOnClickListener
+            }
 
-        // Long press header to open Debug Menu
-        textCoupleGreetings.setOnLongClickListener {
-            com.pookie.game.presentation.ui.dialogs.DebugMenuDialog.show(this)
-            true
+            val cleanCode = codeMatch.value.replace("-", "").uppercase()
+            viewModel.joinRoom(cleanCode)
         }
 
         btnSettings.setOnClickListener {
@@ -128,7 +130,19 @@ class LobbyActivity : AppCompatActivity() {
                     is Resource.Error -> {
                         progressLobby.visibility = View.GONE
                         enableGameControls(true)
-                        Toast.makeText(this@LobbyActivity, state.message, Toast.LENGTH_LONG).show()
+                        val errorMsg = state.message
+                        val displayMsg = if (errorMsg.contains("ROOM_NOT_FOUND", ignoreCase = true) || errorMsg.contains("does not exist", ignoreCase = true)) {
+                            "Room was not found on your backend. Please make sure your partner has already created the room and the code is correct."
+                        } else if (errorMsg.contains("ROOM_FULL", ignoreCase = true) || errorMsg.contains("two active players", ignoreCase = true)) {
+                            "This room is already full with two active players."
+                        } else {
+                            errorMsg
+                        }
+                        AlertDialog.Builder(this@LobbyActivity)
+                            .setTitle("Could Not Join Room")
+                            .setMessage(displayMsg)
+                            .setPositiveButton("OK", null)
+                            .show()
                         viewModel.resetActionState()
                     }
                 }
@@ -151,7 +165,7 @@ class LobbyActivity : AppCompatActivity() {
         val optionsList = mutableListOf(
             if (soundEnabled) "Disable Sound Effects" else "Enable Sound Effects",
             "Reconfigure Backend Deployment ID",
-            "Edit Couple Profile",
+            "Edit Your Nickname",
             "Check for GitHub OTA Updates"
         )
         if (ServiceLocator.isDebugUnlockedInSession) {
@@ -170,7 +184,7 @@ class LobbyActivity : AppCompatActivity() {
                     "Reconfigure Backend Deployment ID" -> {
                         startActivity(Intent(this, BackendSetupActivity::class.java))
                     }
-                    "Edit Couple Profile" -> {
+                    "Edit Your Nickname" -> {
                         startActivity(Intent(this, ProfileSetupActivity::class.java))
                     }
                     "Check for GitHub OTA Updates" -> {

@@ -25,28 +25,13 @@ class ProfileSetupActivity : AppCompatActivity() {
         setContentView(R.layout.activity_profile_setup)
 
         val editMyNickname = findViewById<EditText>(R.id.editMyNickname)
-        val editPartnerNickname = findViewById<EditText>(R.id.editPartnerNickname)
         val btnDiceNickname = findViewById<ImageView>(R.id.btnDiceNickname)
-        val chipGroupVibes = findViewById<ChipGroup>(R.id.chipGroupVibes)
         val btnSaveProfile = findViewById<Button>(R.id.btnSaveProfile)
 
         val initialProfile = viewModel.profileState.value
         if (initialProfile.myNickname.isNotBlank()) {
             editMyNickname.setText(initialProfile.myNickname)
         }
-        if (initialProfile.partnerNickname.isNotBlank()) {
-            editPartnerNickname.setText(initialProfile.partnerNickname)
-        }
-
-        // Set default vibe chip
-        val defaultChip = when (initialProfile.vibeTag) {
-            getString(R.string.vibe_binge) -> R.id.chipBinge
-            getString(R.string.vibe_travelers) -> R.id.chipTravelers
-            getString(R.string.vibe_gamers) -> R.id.chipGamers
-            getString(R.string.vibe_coffee) -> R.id.chipCoffee
-            else -> R.id.chipFoodies
-        }
-        chipGroupVibes.check(defaultChip)
 
         btnDiceNickname.setOnClickListener {
             // Dice rotation animation
@@ -59,21 +44,17 @@ class ProfileSetupActivity : AppCompatActivity() {
 
         btnSaveProfile.setOnClickListener {
             val myName = editMyNickname.text.toString().trim()
-            val partnerName = editPartnerNickname.text.toString().trim()
 
             if (myName.isBlank()) {
                 Toast.makeText(this, "Please enter your nickname or roll the dice!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            val selectedChipId = chipGroupVibes.checkedChipId
-            val selectedVibe = if (selectedChipId != -1) {
-                findViewById<Chip>(selectedChipId).text.toString()
-            } else {
-                getString(R.string.vibe_foodies)
-            }
-
-            viewModel.updateProfile(myName, partnerName, selectedVibe)
+            viewModel.updateProfile(
+                myNickname = myName,
+                partnerNickname = initialProfile.partnerNickname,
+                vibeTag = initialProfile.vibeTag
+            )
             startActivity(Intent(this, LobbyActivity::class.java))
             finish()
         }

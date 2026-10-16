@@ -26,6 +26,7 @@ object DebugMenuDialog {
             "Solo Play / Test: Dots & Boxes",
             "Solo Play / Test: Couples Quiz",
             "Toggle Backend Mode: $mockStatus",
+            "Load Demo Backend Key",
             "Inspect Current Config & Deployment ID",
             "Test 401 Error Diagnostic Dialog",
             "Reset App Preferences (Fresh Start)"
@@ -39,9 +40,15 @@ object DebugMenuDialog {
                     1 -> launchSoloTestGame(activity, GameType.DOTS_AND_BOXES)
                     2 -> launchSoloTestGame(activity, GameType.COUPLES_QUIZ)
                     3 -> toggleBackendMode(activity)
-                    4 -> inspectConfig(activity)
-                    5 -> show401Diagnostic(activity)
-                    6 -> resetPreferences(activity)
+                    4 -> {
+                        val demoKey = com.pookie.game.presentation.common.DebugAuthSecurity.getDemoDeploymentId()
+                        ServiceLocator.preferencesRepository.saveBackendDeploymentId(demoKey)
+                        ServiceLocator.isMockMode = false
+                        Toast.makeText(activity, "Demo backend key applied.", Toast.LENGTH_SHORT).show()
+                    }
+                    5 -> inspectConfig(activity)
+                    6 -> show401Diagnostic(activity)
+                    7 -> resetPreferences(activity)
                 }
             }
             .setNegativeButton("Close", null)
