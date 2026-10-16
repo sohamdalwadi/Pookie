@@ -120,7 +120,7 @@ class GameViewModel(
         val isSimultaneous = currentRoom.gameType == GameType.COUPLES_QUIZ || currentRoom.gameType == GameType.SOUL_SYNC
         val myId = if (isSoloTestMode) currentRoom.host.id else myProfile.myPlayerId
 
-        if (!isSimultaneous && currentRoom.currentTurn != myId) {
+        if (!isSimultaneous && !currentRoom.isMyTurn(myId)) {
             viewModelScope.launch {
                 _viewEffect.emit(GameViewEffect.ShowToast("Waiting for partner's turn!"))
             }
@@ -269,24 +269,28 @@ class GameViewModel(
         val currentRoom = _roomState.value ?: return
         if (currentRoom.status != GameStatus.IN_PROGRESS) return
         val myId = if (isSoloTestMode) currentRoom.host.id else myProfile.myPlayerId
-        if (currentRoom.currentTurn != myId) return
+        if (!currentRoom.isMyTurn(myId)) return
 
         viewModelScope.launch {
-            _viewEffect.emit(GameViewEffect.ShowToast("Turn timed out! Turn passed to partner."))
-            val result = makeMoveUseCase(
-                roomCode = currentRoom.roomCode,
-                playerId = myId,
-                move = mapOf("isTimeout" to true),
-                clientVersion = currentRoom.version
-            )
-            if (result.isSuccess) {
-                val updated = result.getOrThrow()
-                _roomState.value = updated
-                parseGameState(updated)
-                checkMatchEnd(updated)
-                if (isSoloTestMode) {
-                    triggerBotTurnIfNeeded()
+            try {
+                _viewEffect.emit(GameViewEffect.ShowToast("Turn timed out! Turn passed to partner."))
+                val result = makeMoveUseCase(
+                    roomCode = currentRoom.roomCode,
+                    playerId = myId,
+                    move = mapOf("isTimeout" to true),
+                    clientVersion = currentRoom.version
+                )
+                if (result.isSuccess) {
+                    val updated = result.getOrThrow()
+                    _roomState.value = updated
+                    parseGameState(updated)
+                    checkMatchEnd(updated)
+                    if (isSoloTestMode) {
+                        triggerBotTurnIfNeeded()
+                    }
                 }
+            } catch (e: Exception) {
+                // Prevent any unhandled crash during timeout
             }
         }
     }
@@ -298,6 +302,7 @@ class GameViewModel(
         val room = _roomState.value ?: return
         if (room.status != GameStatus.IN_PROGRESS) return
         val partnerId = room.partner?.id ?: "P_PartnerTest"
+        val isPartnerTurn = room.currentTurn == partnerId || room.currentTurn.equals("PARTNER", ignoreCase = true)
 
         botJob?.cancel()
         botJob = viewModelScope.launch {
@@ -325,7 +330,7 @@ class GameViewModel(
 
             when (room.gameType) {
                 GameType.TIC_TAC_TOE -> {
-                    if (room.currentTurn == partnerId) {
+                    if (isPartnerTurn) {
                         delay(900)
                         val tttState = _ticTacToeState.value
                         val botMoveIndex = SoloBotEngine.calculateTicTacToeMove(
@@ -350,7 +355,7 @@ class GameViewModel(
                     }
                 }
                 GameType.DOTS_AND_BOXES -> {
-                    if (room.currentTurn == partnerId) {
+                    if (isPartnerTurn) {
                         delay(900)
                         val dnbState = _dotsAndBoxesState.value
                         val lineKey = SoloBotEngine.calculateDotsAndBoxesMove(
@@ -370,7 +375,8 @@ class GameViewModel(
                                 _roomState.value = updated
                                 parseGameState(updated)
                                 checkMatchEnd(updated)
-                                if (updated.currentTurn == partnerId && updated.status == GameStatus.IN_PROGRESS) {
+                                val isStillBotTurn = updated.currentTurn == partnerId || updated.currentTurn.equals("PARTNER", ignoreCase = true)
+                                if (isStillBotTurn && updated.status == GameStatus.IN_PROGRESS) {
                                     triggerBotTurnIfNeeded()
                                 }
                             }

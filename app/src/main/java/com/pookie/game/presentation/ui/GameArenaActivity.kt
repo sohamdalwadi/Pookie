@@ -62,7 +62,24 @@ class GameArenaActivity : AppCompatActivity() {
         }
 
         val initialRoom = gson.fromJson(roomJson, Room::class.java)
-        viewModel.isSoloTestMode = intent.getBooleanExtra("IS_SOLO_TEST_MODE", false)
+        val isSolo = intent.getBooleanExtra("IS_SOLO_TEST_MODE", false) || initialRoom.partner == null
+        viewModel.isSoloTestMode = isSolo
+
+        val effectiveRoom = if (initialRoom.partner == null) {
+            val botGender = if (initialRoom.host.gender == com.pookie.game.domain.model.Gender.MALE)
+                com.pookie.game.domain.model.Gender.FEMALE else com.pookie.game.domain.model.Gender.MALE
+            initialRoom.copy(
+                status = com.pookie.game.domain.model.GameStatus.IN_PROGRESS,
+                partner = com.pookie.game.domain.model.Player(
+                    id = "P_PartnerBot",
+                    name = "Pookie Bot",
+                    score = 0,
+                    gender = botGender
+                )
+            )
+        } else {
+            initialRoom
+        }
 
         val btnLeaveArena = findViewById<ImageView>(R.id.btnLeaveArena)
         val textArenaRoomCode = findViewById<TextView>(R.id.textArenaRoomCode)
@@ -230,6 +247,33 @@ class GameArenaActivity : AppCompatActivity() {
                         currentTurnPlayerId = room.currentTurn,
                         myPlayerId = myId
                     )
+                    val isMyTurn = room.isMyTurn(myId)
+                    when (room.gameType) {
+                        GameType.TIC_TAC_TOE -> {
+                            val state = viewModel.ticTacToeState.value
+                            ticTacToeView.setBoard(state.board, state.winningLine, interactive = isMyTurn)
+                        }
+                        GameType.DOTS_AND_BOXES -> {
+                            val state = viewModel.dotsAndBoxesState.value
+                            dotsAndBoxesView.setState(
+                                lines = state.claimedLines,
+                                boxes = state.claimedBoxes,
+                                hostId = room.host.id,
+                                interactive = isMyTurn,
+                                gridSize = state.gridSize
+                            )
+                        }
+                        GameType.COUPLES_QUIZ -> {
+                            val state = viewModel.quizState.value
+                            couplesQuizView.render(
+                                quizState = state,
+                                myPlayerId = myId,
+                                partnerId = room.getOpponent(myId)?.id,
+                                interactive = isMyTurn
+                            )
+                        }
+                        GameType.SOUL_SYNC -> {}
+                    }
                 }
             }
         }
@@ -334,7 +378,7 @@ class GameArenaActivity : AppCompatActivity() {
         }
 
         // Initialize ViewModel with room
-        viewModel.initializeRoom(initialRoom)
+        viewModel.initializeRoom(effectiveRoom)
     }
 
     private fun showQrDialog(roomCode: String) {

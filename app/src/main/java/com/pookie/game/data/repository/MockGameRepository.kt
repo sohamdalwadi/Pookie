@@ -92,16 +92,34 @@ class MockGameRepository : IGameRepository {
         val partnerId = room.partner?.id ?: "partner_mock"
         val opponentId = if (playerId == room.host.id) partnerId else room.host.id
 
+        // Turn Timeout: Pass turn to opponent without mutating game state
+        val isTimeoutMove = (move as? Map<*, *>)?.get("isTimeout") == true
+        if (isTimeoutMove) {
+            val updated = room.copy(
+                currentTurn = opponentId,
+                version = room.version + 1
+            )
+            rooms[roomCode] = updated
+            return Result.success(updated)
+        }
+
         val (nextStateJson, nextTurn, isOver, winnerId, isDraw) = when (room.gameType) {
             GameType.TIC_TAC_TOE -> {
                 val state = gson.fromJson(room.gameStateJson, TicTacToeState::class.java)
-                val cell = (move as? Number)?.toInt() ?: move.toString().toInt()
+                val cell = when (move) {
+                    is Number -> move.toInt()
+                    is Map<*, *> -> (move["cellIndex"] as? Number)?.toInt() ?: 0
+                    else -> move.toString().toIntOrNull() ?: 0
+                }
                 val res = ticTacToeEngine.applyMove(state, cell, playerId, opponentId)
                 StateDelta(gson.toJson(res.nextState), res.nextTurnPlayerId, res.isGameOver, res.winnerId, res.isDraw)
             }
             GameType.DOTS_AND_BOXES -> {
                 val state = gson.fromJson(room.gameStateJson, DotsAndBoxesState::class.java)
-                val lineKey = move.toString()
+                val lineKey = when (move) {
+                    is Map<*, *> -> (move["lineKey"] as? String) ?: ""
+                    else -> move.toString()
+                }
                 val res = dotsAndBoxesEngine.applyMove(state, lineKey, playerId, opponentId)
                 StateDelta(gson.toJson(res.nextState), res.nextTurnPlayerId, res.isGameOver, res.winnerId, res.isDraw)
             }
