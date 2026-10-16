@@ -67,9 +67,12 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
     private var padding = 48f
     private var dotRadius = 10f
 
+    private var boxNumbers: Map<String, Int> = emptyMap()
+
     fun setState(
         lines: Map<String, String>,
         boxes: Map<String, String>,
+        boxNumbers: Map<String, Int> = emptyMap(),
         hostId: String,
         interactive: Boolean = true,
         gridSize: Int = 3
@@ -81,6 +84,7 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
         }
         claimedLines = lines
         claimedBoxes = boxes
+        this.boxNumbers = boxNumbers
         hostPlayerId = hostId
         isInteractive = interactive
         invalidate()
@@ -148,11 +152,11 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
                     val paint = if (owner == hostPlayerId) hostBoxPaint else partnerBoxPaint
                     canvas.drawRoundRect(rect, 12f, 12f, paint)
 
-                    // Draw box number
-                    val boxNum = (r * gridSize + c + 1).toString()
+                    // Draw sequential box number for this player (1, 2, 3...)
+                    val playerBoxNum = (boxNumbers[boxKey] ?: getFallbackBoxNumber(boxKey, owner)).toString()
                     boxNumberTextPaint.textSize = step * 0.35f
                     val textY = top + step / 2f - (boxNumberTextPaint.descent() + boxNumberTextPaint.ascent()) / 2f
-                    canvas.drawText(boxNum, left + step / 2f, textY, boxNumberTextPaint)
+                    canvas.drawText(playerBoxNum, left + step / 2f, textY, boxNumberTextPaint)
                 }
             }
         }
@@ -269,5 +273,19 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
         }
 
         return bestLine
+    }
+
+    private fun getFallbackBoxNumber(targetBoxKey: String, targetOwner: String): Int {
+        var count = 0
+        for (r in 0 until gridSize) {
+            for (c in 0 until gridSize) {
+                val k = "box_${r}_${c}"
+                if (claimedBoxes[k] == targetOwner) {
+                    count++
+                    if (k == targetBoxKey) return count
+                }
+            }
+        }
+        return 1
     }
 }

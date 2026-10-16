@@ -24,9 +24,10 @@ V[2][0]     B[2][0]   V[2][1]     B[2][1]   V[2][2]     B[2][2]   V[2][3]
 (3,0) --- H[3][0] --- (3,1) --- H[3][1] --- (3,2) --- H[3][2] --- (3,3)
 ```
 
-- **Horizontal Edges (`hLines`):** 4 rows × 3 columns (12 edges total).
-- **Vertical Edges (`vLines`):** 3 rows × 4 columns (12 edges total).
-- **Boxes (`boxes`):** 3 rows × 3 columns (9 boxes total).
+- **Horizontal Edges (`hLines`):** `(gridSize + 1)` rows × `gridSize` columns.
+- **Vertical Edges (`vLines`):** `gridSize` rows × `(gridSize + 1)` columns.
+- **Boxes (`boxes`):** `gridSize` × `gridSize` boxes total.
+- **Sequential Box Numbering:** Whenever a player completes a box, it is stamped with that player's cumulative capture count (e.g. Host's 1st box is marked "1", Host's 2nd is "2", and Partner's 1st is marked "1", Partner's 2nd is "2").
 
 ---
 

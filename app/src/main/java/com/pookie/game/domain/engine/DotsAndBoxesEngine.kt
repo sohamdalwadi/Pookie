@@ -3,7 +3,8 @@ package com.pookie.game.domain.engine
 data class DotsAndBoxesState(
     val gridSize: Int = 3,
     val claimedLines: Map<String, String> = emptyMap(), // Key: lineId -> playerId
-    val claimedBoxes: Map<String, String> = emptyMap()  // Key: "box_r_c" -> playerId
+    val claimedBoxes: Map<String, String> = emptyMap(), // Key: "box_r_c" -> playerId
+    val boxNumbers: Map<String, Int> = emptyMap()       // Key: "box_r_c" -> sequential box number per player (1, 2, 3...)
 )
 
 class DotsAndBoxesEngine : GameEngine<DotsAndBoxesState, String> {
@@ -49,8 +50,12 @@ class DotsAndBoxesEngine : GameEngine<DotsAndBoxesState, String> {
         newLines[move] = playerId
 
         val newBoxes = state.claimedBoxes.toMutableMap()
+        val newBoxNumbers = state.boxNumbers.toMutableMap()
         var newlyCompletedBoxes = 0
         val gridSize = state.gridSize
+
+        // Count existing boxes captured by this player to number sequentially (1, 2, 3...)
+        var playerBoxCount = newBoxes.values.count { it == playerId }
 
         // Check each box in the grid
         for (r in 0 until gridSize) {
@@ -68,6 +73,8 @@ class DotsAndBoxesEngine : GameEngine<DotsAndBoxesState, String> {
                         newLines.containsKey(right)
                     ) {
                         newBoxes[boxKey] = playerId
+                        playerBoxCount++
+                        newBoxNumbers[boxKey] = playerBoxCount
                         newlyCompletedBoxes++
                     }
                 }
@@ -77,7 +84,12 @@ class DotsAndBoxesEngine : GameEngine<DotsAndBoxesState, String> {
         val totalBoxes = gridSize * gridSize
         val isGameOver = newBoxes.size >= totalBoxes
 
-        val nextState = state.copy(gridSize = gridSize, claimedLines = newLines, claimedBoxes = newBoxes)
+        val nextState = state.copy(
+            gridSize = gridSize,
+            claimedLines = newLines,
+            claimedBoxes = newBoxes,
+            boxNumbers = newBoxNumbers
+        )
 
         if (isGameOver) {
             val player1Boxes = newBoxes.values.count { it == playerId }

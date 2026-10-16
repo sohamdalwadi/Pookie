@@ -258,6 +258,7 @@ class GameArenaActivity : AppCompatActivity() {
                             dotsAndBoxesView.setState(
                                 lines = state.claimedLines,
                                 boxes = state.claimedBoxes,
+                                boxNumbers = state.boxNumbers,
                                 hostId = room.host.id,
                                 interactive = isMyTurn,
                                 gridSize = state.gridSize
@@ -297,6 +298,7 @@ class GameArenaActivity : AppCompatActivity() {
                 dotsAndBoxesView.setState(
                     lines = state.claimedLines,
                     boxes = state.claimedBoxes,
+                    boxNumbers = state.boxNumbers,
                     hostId = currentRoom?.host?.id ?: "",
                     interactive = isMyTurn,
                     gridSize = state.gridSize

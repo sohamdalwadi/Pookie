@@ -352,6 +352,7 @@ function handleCreateRoom(payload) {
       gridSize: gridSize,
       claimedLines: {},
       claimedBoxes: {},
+      boxNumbers: {},
       hostBoxesCount: 0,
       partnerBoxesCount: 0,
       lastMoveAwardedExtraTurn: false,
@@ -858,11 +859,18 @@ function reduceDotsAndBoxes(state, move, player) {
 
   const claimedLines = Object.assign({}, state.claimedLines || {});
   const claimedBoxes = Object.assign({}, state.claimedBoxes || {});
+  const boxNumbers = Object.assign({}, state.boxNumbers || {});
 
   if (claimedLines[lineKey]) {
     return { error: "Line already claimed." };
   }
   claimedLines[lineKey] = player;
+
+  // Count existing boxes captured by this player to number sequentially (1, 2, 3...)
+  let currentPlayerBoxCount = 0;
+  Object.keys(claimedBoxes).forEach(function(k) {
+    if (claimedBoxes[k] === player) currentPlayerBoxCount++;
+  });
 
   // Check if any box was completed by this line move
   let newlyCapturedBoxes = 0;
@@ -877,6 +885,8 @@ function reduceDotsAndBoxes(state, move, player) {
 
         if (claimedLines[top] && claimedLines[bottom] && claimedLines[left] && claimedLines[right]) {
           claimedBoxes[boxKey] = player;
+          currentPlayerBoxCount++;
+          boxNumbers[boxKey] = currentPlayerBoxCount;
           newlyCapturedBoxes++;
         }
       }
@@ -914,6 +924,7 @@ function reduceDotsAndBoxes(state, move, player) {
       gridSize: gridSize,
       claimedLines: claimedLines,
       claimedBoxes: claimedBoxes,
+      boxNumbers: boxNumbers,
       hostBoxesCount: hostBoxes,
       partnerBoxesCount: partnerBoxes,
       lastMoveAwardedExtraTurn: awardedExtraTurn,
