@@ -19,22 +19,12 @@ class OtaRepositoryImpl : IOtaRepository {
 
     private val gson = Gson()
 
-    companion object {
-        private const val GITHUB_LATEST_RELEASE_URL =
-            "https://api.github.com/repos/sohamdalwadi/Pookie/releases/latest"
-        private const val GITHUB_RELEASES_LIST_URL =
-            "https://api.github.com/repos/sohamdalwadi/Pookie/releases"
-    }
-
     override suspend fun checkForUpdates(currentVersion: String): Result<OtaUpdateInfo> =
         withContext(Dispatchers.IO) {
             runCatching {
-                // First try official latest release
-                var release = fetchRelease(GITHUB_LATEST_RELEASE_URL)
-                // If 404 or empty (e.g. prereleases only), query the releases list and grab the newest release
-                if (release == null) {
-                    release = fetchFirstReleaseFromList(GITHUB_RELEASES_LIST_URL)
-                }
+                // Query branch-specific channel endpoint from BuildConfig (develop vs main)
+                val targetEndpoint = com.pookie.game.BuildConfig.OTA_UPDATE_URL
+                val release = fetchRelease(targetEndpoint)
 
                 if (release == null) {
                     return@runCatching OtaUpdateInfo(
@@ -53,7 +43,7 @@ class OtaRepositoryImpl : IOtaRepository {
 
                 val apkAsset = release.assets?.find { it.name.endsWith(".apk") }
                 val downloadUrl = apkAsset?.browserDownloadUrl
-                    ?: "https://github.com/sohamdalwadi/Pookie/releases/latest"
+                    ?: "https://github.com/sohamdalwadi/Pookie/releases"
 
                 val isNewer = compareSemver(tagSemver, normalizedCurrent) > 0
 

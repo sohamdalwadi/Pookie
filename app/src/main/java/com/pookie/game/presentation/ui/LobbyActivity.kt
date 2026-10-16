@@ -161,7 +161,7 @@ class LobbyActivity : AppCompatActivity() {
                 if (updateInfo != null && updateInfo.hasUpdate && !updateInfo.downloadUrl.isNullOrBlank()) {
                     AlertDialog.Builder(this@LobbyActivity)
                         .setTitle(R.string.ota_update_available)
-                        .setMessage("A new version (${updateInfo.latestVersion}) is available! Current: v${BuildConfig.VERSION_NAME}.\n\nWould you like to download and install now?")
+                        .setMessage("A new ${BuildConfig.OTA_CHANNEL} build (${updateInfo.latestVersion}) is available!\n\nCurrent: v${BuildConfig.VERSION_NAME}\nChannel: ${BuildConfig.OTA_CHANNEL}\n\nWould you like to download and install now?")
                         .setPositiveButton("Download APK") { _, _ ->
                             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.downloadUrl))
                             startActivity(browserIntent)
@@ -233,7 +233,7 @@ class LobbyActivity : AppCompatActivity() {
                         startActivity(Intent(this, ProfileSetupActivity::class.java))
                     }
                     "Check for GitHub OTA Updates" -> {
-                        Toast.makeText(this, "Checking GitHub releases for v${BuildConfig.VERSION_NAME}...", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Checking ${BuildConfig.OTA_CHANNEL} channel for updates (v${BuildConfig.VERSION_NAME})...", Toast.LENGTH_SHORT).show()
                         viewModel.checkForOtaUpdates(BuildConfig.VERSION_NAME)
                     }
                     "Developer Debug Menu" -> {

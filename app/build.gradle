@@ -79,6 +79,29 @@ def computeVersionInfo() {
 
 def versionInfo = computeVersionInfo()
 
+def gitBranch = System.getenv("GITHUB_REF_NAME") ?: ""
+if (gitBranch.isEmpty()) {
+    try {
+        def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
+        def gitCmd = isWindows ? ["cmd", "/c", "git"] : ["git"]
+        def branchStdout = new ByteArrayOutputStream()
+        exec {
+            commandLine(*gitCmd, 'rev-parse', '--abbrev-ref', 'HEAD')
+            standardOutput = branchStdout
+            ignoreExitValue = true
+        }
+        gitBranch = branchStdout.toString().trim()
+    } catch (Exception ignored) {
+        gitBranch = "develop"
+    }
+}
+
+def isProduction = gitBranch == "main" || gitBranch.startsWith("v")
+def otaChannel = isProduction ? "PRODUCTION" : "DEVELOP"
+def otaEndpoint = isProduction ?
+    "https://api.github.com/repos/sohamdalwadi/Pookie/releases/latest" :
+    "https://api.github.com/repos/sohamdalwadi/Pookie/releases/tags/dev-latest"
+
 android {
     namespace 'com.pookie.game'
     compileSdk 34
@@ -93,6 +116,8 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField "String", "ENCRYPTED_DEMO_KEY_HEX", "\"${encryptedDemoKeyHex}\""
+        buildConfigField "String", "OTA_CHANNEL", "\"${otaChannel}\""
+        buildConfigField "String", "OTA_UPDATE_URL", "\"${otaEndpoint}\""
     }
 
     buildTypes {

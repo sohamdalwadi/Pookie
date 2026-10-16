@@ -71,15 +71,24 @@ flowchart TD
 
 Pookie connects directly to its own GitHub repository to check for updates, download new APK releases, and trigger installation without external app store dependencies.
 
-### 2.0 Dynamic Versioning & Rolling Asset Replacement
-- **Dynamic Tag-Based Versioning (`develop` branch):**
-  - Version is dynamically derived from the last semantic tag (`git describe --tags --match "v[0-9]*"`).
-  - If no tag exists, it starts from `0.0.0` and increments the patch version with the commit count on develop (e.g. `0.0.28`).
-  - `versionCode` and `versionName` are injected into `BuildConfig` at compile time.
+### 2.0 Branch-Isolated Dual-Channel OTA Architecture
+To prevent version collisions and accidental downgrades between ongoing development and official production releases, Pookie implements isolated release channels:
+
+| Channel | Source Branch | Build-Time `OTA_CHANNEL` | Target GitHub API Endpoint | Rolling Tag |
+| :--- | :--- | :--- | :--- | :--- |
+| **DEVELOP** | `develop` | `DEVELOP` | `.../releases/tags/dev-latest` | `dev-latest` |
+| **PRODUCTION** | `main` | `PRODUCTION` | `.../releases/latest` | `v*` (SemVer tags) |
+
+- **Build-Time Channel Injection (`app/build.gradle`):**
+  - Gradle detects the current branch via `GITHUB_REF_NAME` (in CI/CD) or local git (`git rev-parse --abbrev-ref HEAD`).
+  - Injects `BuildConfig.OTA_CHANNEL` and `BuildConfig.OTA_UPDATE_URL` directly into the compiled bytecode.
+- **Independent Version Tracking:**
+  - `develop` builds dynamically calculate versions starting from `0.0.0` or the last tag + commit count (e.g. `0.0.28`).
+  - `main` builds track strict SemVer release tags (`v1.0.0`, `v1.1.0`).
+  - Neither channel can see, overwrite, or prompt updates from the other channel.
 - **Latest Tag Asset Replacement:**
   - In CI/CD (`.github/workflows/dev-build.yml`), prior to uploading the new build to the `dev-latest` tag, existing `.apk` assets are purged via `gh release delete-asset`.
-  - The latest APK is uploaded as both `Pookie-dev-latest.apk` and `Pookie-v<version>.apk`, with `make_latest: true`.
-  - The client queries `/releases/latest` with automatic fallback to `/releases[0]` and parses semver from release metadata to prompt the user to download and install.
+  - The latest APK is uploaded as both `Pookie-dev-latest.apk` and `Pookie-v<version>.apk`.
 
 ```mermaid
 sequenceDiagram
