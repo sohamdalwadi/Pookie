@@ -30,6 +30,7 @@ class BackendSetupActivity : AppCompatActivity() {
         SetupViewModel(ServiceLocator.preferencesRepository, ServiceLocator.gameRepository)
     }
 
+    private lateinit var imgSetupHeaderIcon: ImageView
     private lateinit var editDeploymentId: EditText
     private lateinit var btnTestAndSave: Button
     private lateinit var btnHowToSetup: Button
@@ -38,10 +39,14 @@ class BackendSetupActivity : AppCompatActivity() {
     private lateinit var progressLoading: ProgressBar
     private lateinit var textStatusMessage: TextView
 
+    private var tapCount = 0
+    private var lastTapTime = 0L
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_backend_setup)
 
+        imgSetupHeaderIcon = findViewById(R.id.imgSetupHeaderIcon)
         editDeploymentId = findViewById(R.id.editDeploymentId)
         btnTestAndSave = findViewById(R.id.btnTestAndSave)
         btnHowToSetup = findViewById(R.id.btnHowToSetup)
@@ -49,6 +54,24 @@ class BackendSetupActivity : AppCompatActivity() {
         btnOpenDevDebug = findViewById(R.id.btnOpenDevDebug)
         progressLoading = findViewById(R.id.progressLoading)
         textStatusMessage = findViewById(R.id.textStatusMessage)
+
+        updateDebugVisibility()
+
+        // 7 taps on header icon reveals password dialog
+        imgSetupHeaderIcon.setOnClickListener {
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastTapTime > 3000) {
+                tapCount = 1
+            } else {
+                tapCount++
+            }
+            lastTapTime = currentTime
+
+            if (tapCount >= 7) {
+                tapCount = 0
+                showDeveloperUnlockDialog()
+            }
+        }
 
         // Pre-fill existing if any
         val existingId = ServiceLocator.preferencesRepository.getBackendDeploymentId()
@@ -113,7 +136,37 @@ class BackendSetupActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        updateDebugVisibility()
         checkClipboardForBackendId()
+    }
+
+    private fun updateDebugVisibility() {
+        btnOpenDevDebug.visibility = if (ServiceLocator.isDebugUnlockedInSession) View.VISIBLE else View.GONE
+    }
+
+    private fun showDeveloperUnlockDialog() {
+        val input = EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            hint = "Enter PIN"
+            setPadding(48, 32, 48, 32)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Developer Unlock")
+            .setMessage("Enter developer password to unlock debug menu:")
+            .setView(input)
+            .setPositiveButton("Unlock") { _, _ ->
+                val entered = input.text.toString()
+                if (com.pookie.game.presentation.common.DebugAuthSecurity.verifyPassword(entered)) {
+                    ServiceLocator.isDebugUnlockedInSession = true
+                    updateDebugVisibility()
+                    Toast.makeText(this, "Developer debug menu unlocked for this session.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Incorrect password.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun checkClipboardForBackendId() {
@@ -168,7 +221,7 @@ class BackendSetupActivity : AppCompatActivity() {
                 "2. Click Extensions > Apps Script.\n" +
                 "3. In the top right, click Deploy > Manage deployments.\n" +
                 "4. Copy the 'Deployment ID' (starts with AKfycb...).\n\n" +
-                "⚠️ CRITICAL FOR 401 ERROR:\n" +
+                "IMPORTANT FOR 401 ERROR:\n" +
                 "Click the Edit (pencil) icon next to your deployment.\n" +
                 "Ensure 'Who has access' is set to 'Anyone' (NOT 'Only myself').\n\n" +
                 "5. Paste it here and tap Test & Save!"

@@ -40,6 +40,8 @@ Whenever changes are made to `backend/src/Code.js` or `backend/src/appsscript.js
 ---
 
 ## 🔒 Security & Git Checklist
+- **CRITICAL: Git Push Control:** The AI Agent is permitted to create local git commits (`git commit`), but **MUST NEVER run `git push`**. All `git push` commands will be executed exclusively by the USER to control CI/CD execution and build triggers.
+- **CRITICAL: Zero-Emoji Rule:** Absolutely NO emojis are allowed in UI elements, buttons, titles, dialogues, status messages, or code strings. Emojis are STRICTLY and EXCLUSIVELY permitted inside predefined couple vibe tags (e.g. `🍕 Foodies`, `🎬 Movie Buffs`).
 - **Never commit credentials:** `.clasp.json`, `.clasprc.json`, `config.json`, and `.env` must remain strictly ignored.
 - **Always verify git status:** Ensure working tree is clean and only intentional files are staged.
 - **Maintain documentation:** Update corresponding docs in `docs/` whenever adding features or altering contracts.

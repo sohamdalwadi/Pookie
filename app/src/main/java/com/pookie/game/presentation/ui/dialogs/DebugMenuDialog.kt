@@ -22,17 +22,17 @@ object DebugMenuDialog {
     fun show(activity: Activity) {
         val mockStatus = if (ServiceLocator.isMockMode) "[ACTIVE: Mock Local Mode]" else "[ACTIVE: Google Apps Script]"
         val options = arrayOf(
-            "🎮 Solo Play / Test: Tic-Tac-Toe",
-            "🎮 Solo Play / Test: Dots & Boxes",
-            "🎮 Solo Play / Test: Couples Quiz",
-            "⚡ Toggle Backend Mode: $mockStatus",
-            "🔍 Inspect Current Config & Deployment ID",
-            "🛠️ Test 401 Error Diagnostic Dialog",
-            "🔄 Reset App Preferences (Fresh Start)"
+            "Solo Play / Test: Tic-Tac-Toe",
+            "Solo Play / Test: Dots & Boxes",
+            "Solo Play / Test: Couples Quiz",
+            "Toggle Backend Mode: $mockStatus",
+            "Inspect Current Config & Deployment ID",
+            "Test 401 Error Diagnostic Dialog",
+            "Reset App Preferences (Fresh Start)"
         )
 
         AlertDialog.Builder(activity)
-            .setTitle("🛠️ Pookie Developer / Debug Menu")
+            .setTitle("Pookie Developer Debug Menu")
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> launchSoloTestGame(activity, GameType.TIC_TAC_TOE)

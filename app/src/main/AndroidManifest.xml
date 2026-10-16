@@ -44,6 +44,14 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <receiver
+            android:name=".presentation.common.BackendConfigReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.pookie.SET_BACKEND_ID" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

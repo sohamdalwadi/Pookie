@@ -12,6 +12,7 @@
         android:padding="24dp">
 
         <ImageView
+            android:id="@+id/imgSetupHeaderIcon"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_marginTop="16dp"
@@ -141,6 +142,7 @@
             android:layout_height="50dp"
             android:layout_marginTop="12dp"
             android:textColor="@color/amber_warning"
-            android:text="🛠️ Developer / Debug Menu" />
+            android:text="Developer Debug Menu"
+            android:visibility="gone" />
     </LinearLayout>
 </ScrollView>

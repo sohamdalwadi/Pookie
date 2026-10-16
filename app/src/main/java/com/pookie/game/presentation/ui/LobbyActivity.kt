@@ -148,33 +148,36 @@ class LobbyActivity : AppCompatActivity() {
 
     private fun showSettingsDialog() {
         val soundEnabled = ServiceLocator.preferencesRepository.isSoundEnabled()
-        val options = arrayOf(
+        val optionsList = mutableListOf(
             if (soundEnabled) "Disable Sound Effects" else "Enable Sound Effects",
             "Reconfigure Backend Deployment ID",
             "Edit Couple Profile",
-            "Check for GitHub OTA Updates",
-            "🛠️ Open Developer / Debug Menu"
+            "Check for GitHub OTA Updates"
         )
+        if (ServiceLocator.isDebugUnlockedInSession) {
+            optionsList.add("Developer Debug Menu")
+        }
+        val options = optionsList.toTypedArray()
 
         AlertDialog.Builder(this)
             .setTitle(R.string.settings_title)
             .setItems(options) { _, which ->
-                when (which) {
-                    0 -> {
+                when (options[which]) {
+                    "Disable Sound Effects", "Enable Sound Effects" -> {
                         ServiceLocator.preferencesRepository.setSoundEnabled(!soundEnabled)
                         Toast.makeText(this, "Sound updated", Toast.LENGTH_SHORT).show()
                     }
-                    1 -> {
+                    "Reconfigure Backend Deployment ID" -> {
                         startActivity(Intent(this, BackendSetupActivity::class.java))
                     }
-                    2 -> {
+                    "Edit Couple Profile" -> {
                         startActivity(Intent(this, ProfileSetupActivity::class.java))
                     }
-                    3 -> {
+                    "Check for GitHub OTA Updates" -> {
                         viewModel.checkForOtaUpdates("1.0.0")
                         Toast.makeText(this, "Checking GitHub releases...", Toast.LENGTH_SHORT).show()
                     }
-                    4 -> {
+                    "Developer Debug Menu" -> {
                         com.pookie.game.presentation.ui.dialogs.DebugMenuDialog.show(this)
                     }
                 }

@@ -23,6 +23,7 @@ object ServiceLocator {
     private var appContext: Context? = null
 
     var isMockMode: Boolean = false
+    var isDebugUnlockedInSession: Boolean = false
 
     fun initialize(context: Context) {
         appContext = context.applicationContext
