@@ -246,7 +246,92 @@ Sends a quick reaction or nudge buzzer to the partner during an active game sess
 
 ---
 
-## 7. Error Codes Catalog
+## 7. Action: `SUBMIT_VERDICT`
+Submits a player's judging verdict (`MATCH` or `MISS`) for the revealed SoulSync open-ended answers.
+
+- **Method:** `POST`
+- **Request Body:**
+```json
+{
+  "action": "SUBMIT_VERDICT",
+  "payload": {
+    "roomCode": "POOK99",
+    "playerId": "c3f912e6-8c43-4b61-9c12-32f281e0129a",
+    "verdict": "MATCH"
+  }
+}
+```
+> Supported `verdict` values: `MATCH` ("We Match (+2 Pts)"), `MISS` ("We Missed (-1 Pt)").
+
+- **Dual Handshake Scoring Resolution:**
+  - When **both** players have submitted their verdict:
+    - If **both** selected `"MATCH"`: `coupleScore += 2`.
+    - If **either** selected `"MISS"`: `coupleScore = Math.max(0, coupleScore - 1)`.
+  - Once evaluated, temporary secret text strings are wiped and the board advances to the next question round.
+
+- **Response Body (Awaiting Partner's Verdict):**
+```json
+{
+  "status": "SUCCESS",
+  "timestamp": "2026-10-16T17:00:00.000Z",
+  "data": {
+    "roomCode": "POOK99",
+    "status": "PLAYING",
+    "gameType": "SOUL_SYNC",
+    "gameState": {
+      "currentRound": 1,
+      "phase": "JUDGING",
+      "verdicts": {
+        "host": "MATCH",
+        "partner": null
+      },
+      "playerReady": {
+        "host": true,
+        "partner": false
+      },
+      "coupleScore": 4
+    },
+    "version": 7
+  }
+}
+```
+
+- **Response Body (Round Resolved & Reset for Next Prompt):**
+```json
+{
+  "status": "SUCCESS",
+  "timestamp": "2026-10-16T17:00:02.500Z",
+  "data": {
+    "roomCode": "POOK99",
+    "status": "PLAYING",
+    "gameType": "SOUL_SYNC",
+    "gameState": {
+      "currentRound": 2,
+      "totalRounds": 5,
+      "promptText": "What is our shared secret comfort food?",
+      "phase": "ANSWERING",
+      "hostAnswer": null,
+      "partnerAnswer": null,
+      "answersRevealed": false,
+      "verdicts": {
+        "host": null,
+        "partner": null
+      },
+      "playerReady": {
+        "host": false,
+        "partner": false
+      },
+      "coupleScore": 6,
+      "lastRoundOutcome": "MATCH"
+    },
+    "version": 8
+  }
+}
+```
+
+---
+
+## 8. Error Codes Catalog
 
 | Error Code | HTTP Status Equivalent | Description |
 |:---|:---:|:---|
