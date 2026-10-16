@@ -222,7 +222,7 @@
                 android:layout_height="48dp"
                 android:background="@drawable/bg_reaction_bubble"
                 android:padding="10dp"
-                android:src="@drawable/ic_reaction_lightning" />
+                android:src="@drawable/ic_game_soul_sync" />
 
             <LinearLayout
                 android:layout_width="0dp"

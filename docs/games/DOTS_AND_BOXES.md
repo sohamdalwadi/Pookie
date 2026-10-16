@@ -81,4 +81,14 @@ V[2][0]     B[2][0]   V[2][1]     B[2][1]   V[2][2]     B[2][2]   V[2][3]
      - Increment the player's box count.
      - **The player retains the turn (`CurrentTurn` is NOT flipped).**
   4. If no box is completed, `CurrentTurn` switches to the opponent.
-  5. When all 9 boxes are claimed, the player with the most boxes wins.
+  5. When all boxes are claimed, the player with the most boxes wins.
+
+---
+
+## 4. UI Box Numbering & Visual Hierarchy
+- **Completed Box Indexing:**
+  When a box `(r, c)` is completed, the custom `DotsAndBoxesBoardView` renders:
+  1. Rounded fill with the claiming player's branded theme (`#33FF4E78` for Host, `#3300D2A0` for Partner).
+  2. Sequential box number `(r * gridSize + c + 1)` centered cleanly in high-contrast white bold typography (`#FFFFFF`).
+  3. Provides visual clarity during tactical chaining and lets players call out territory numbers directly.
+

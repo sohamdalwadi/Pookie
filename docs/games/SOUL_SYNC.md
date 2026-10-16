@@ -60,13 +60,13 @@ Both partners read each other's revealed freeform answers side-by-side and indep
 ```json
 {
   "currentRound": 1,
-  "totalRounds": 5,
-  "promptId": "SYNC_001",
-  "promptText": "What was the exact moment you knew you had feelings for me?",
-  "category": "INTIMACY",
+  "totalRounds": 10,
+  "promptId": "SS_1",
+  "promptText": "What is {TARGET}'s absolute favorite comfort food when having a rough day?",
+  "targetRole": "PARTNER",
   "phase": "JUDGING",
-  "hostAnswer": "When we got soaked in the rain eating ice cream at 2 AM",
-  "partnerAnswer": "The midnight walk in July when it poured rain",
+  "hostAnswer": "Chicken ramen with extra egg",
+  "partnerAnswer": "Spicy tonkotsu ramen with soft boiled egg",
   "answersRevealed": true,
   "verdicts": {
     "host": "MATCH",

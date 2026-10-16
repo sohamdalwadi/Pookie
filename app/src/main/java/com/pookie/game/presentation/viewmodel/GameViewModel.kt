@@ -3,11 +3,13 @@ package com.pookie.game.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.pookie.game.domain.engine.BotBehaviorMode
 import com.pookie.game.domain.engine.CouplesQuizEngine
 import com.pookie.game.domain.engine.CouplesQuizState
 import com.pookie.game.domain.engine.DotsAndBoxesEngine
 import com.pookie.game.domain.engine.DotsAndBoxesState
 import com.pookie.game.domain.engine.QuizAnswerMove
+import com.pookie.game.domain.engine.SoloBotEngine
 import com.pookie.game.domain.engine.TicTacToeEngine
 import com.pookie.game.domain.engine.TicTacToeState
 import com.pookie.game.domain.model.CoupleProfile
@@ -80,7 +82,11 @@ class GameViewModel(
     fun initializeRoom(initialRoom: Room) {
         _roomState.value = initialRoom
         parseGameState(initialRoom)
-        startPolling(initialRoom.roomCode)
+        if (isSoloTestMode) {
+            triggerBotTurnIfNeeded()
+        } else {
+            startPolling(initialRoom.roomCode)
+        }
     }
 
     private fun parseGameState(room: Room) {
@@ -111,10 +117,10 @@ class GameViewModel(
 
     fun makeMove(move: Any, piggybackReaction: ReactionType? = null) {
         val currentRoom = _roomState.value ?: return
-        val movingPlayerId = if (isSoloTestMode) currentRoom.currentTurn else myProfile.myPlayerId
         val isSimultaneous = currentRoom.gameType == GameType.COUPLES_QUIZ || currentRoom.gameType == GameType.SOUL_SYNC
+        val myId = if (isSoloTestMode) currentRoom.host.id else myProfile.myPlayerId
 
-        if (!isSoloTestMode && !isSimultaneous && currentRoom.currentTurn != myProfile.myPlayerId) {
+        if (!isSimultaneous && currentRoom.currentTurn != myId) {
             viewModelScope.launch {
                 _viewEffect.emit(GameViewEffect.ShowToast("Waiting for partner's turn!"))
             }
@@ -125,7 +131,7 @@ class GameViewModel(
             soundManager.playMoveSound()
             val result = makeMoveUseCase(
                 roomCode = currentRoom.roomCode,
-                playerId = movingPlayerId,
+                playerId = myId,
                 move = move,
                 clientVersion = currentRoom.version,
                 piggybackReaction = piggybackReaction
@@ -137,26 +143,8 @@ class GameViewModel(
                 parseGameState(updated)
                 checkMatchEnd(updated)
 
-                // If in solo quiz test mode, automatically simulate partner's move if needed
-                if (isSoloTestMode && currentRoom.gameType == GameType.COUPLES_QUIZ) {
-                    val partnerId = currentRoom.partner?.id ?: "P_PartnerTest"
-                    val quizState = _quizState.value
-                    if (!quizState.hasPlayerAnswered(partnerId)) {
-                        val simOption = (0..3).random()
-                        val simMove = QuizAnswerMove(quizState.currentQuestionIndex, simOption)
-                        val partnerResult = makeMoveUseCase(
-                            roomCode = currentRoom.roomCode,
-                            playerId = partnerId,
-                            move = simMove,
-                            clientVersion = updated.version
-                        )
-                        if (partnerResult.isSuccess) {
-                            val partnerUpdated = partnerResult.getOrThrow()
-                            _roomState.value = partnerUpdated
-                            parseGameState(partnerUpdated)
-                            checkMatchEnd(partnerUpdated)
-                        }
-                    }
+                if (isSoloTestMode) {
+                    triggerBotTurnIfNeeded()
                 }
             } else {
                 _viewEffect.emit(GameViewEffect.ShowToast(result.exceptionOrNull()?.message ?: "Move failed"))
@@ -180,13 +168,26 @@ class GameViewModel(
 
     fun requestRematch() {
         val currentRoom = _roomState.value ?: return
+        val myId = if (isSoloTestMode) currentRoom.host.id else myProfile.myPlayerId
         viewModelScope.launch {
-            val result = requestRematchUseCase(currentRoom.roomCode, myProfile.myPlayerId)
+            val result = requestRematchUseCase(currentRoom.roomCode, myId)
             if (result.isSuccess) {
                 val updated = result.getOrThrow()
                 _roomState.value = updated
                 parseGameState(updated)
                 _viewEffect.emit(GameViewEffect.ShowToast("Rematch requested!"))
+
+                if (isSoloTestMode) {
+                    delay(800)
+                    val partnerId = currentRoom.partner?.id ?: "P_PartnerTest"
+                    val botRematch = requestRematchUseCase(currentRoom.roomCode, partnerId)
+                    if (botRematch.isSuccess) {
+                        val rematchRoom = botRematch.getOrThrow()
+                        _roomState.value = rematchRoom
+                        parseGameState(rematchRoom)
+                        triggerBotTurnIfNeeded()
+                    }
+                }
             }
         }
     }
@@ -217,11 +218,12 @@ class GameViewModel(
 
     fun submitSoulSyncAnswer(text: String) {
         val currentRoom = _roomState.value ?: return
+        val myId = if (isSoloTestMode) currentRoom.host.id else myProfile.myPlayerId
         viewModelScope.launch {
             soundManager.playMoveSound()
             val result = makeMoveUseCase(
                 roomCode = currentRoom.roomCode,
-                playerId = myProfile.myPlayerId,
+                playerId = myId,
                 move = mapOf("text" to text),
                 clientVersion = currentRoom.version
             )
@@ -230,6 +232,9 @@ class GameViewModel(
                 _roomState.value = updated
                 parseGameState(updated)
                 checkMatchEnd(updated)
+                if (isSoloTestMode) {
+                    triggerBotTurnIfNeeded()
+                }
             } else {
                 _viewEffect.emit(GameViewEffect.ShowToast(result.exceptionOrNull()?.message ?: "Failed to submit answer"))
             }
@@ -238,11 +243,12 @@ class GameViewModel(
 
     fun submitSoulSyncVerdict(verdict: String) {
         val currentRoom = _roomState.value ?: return
+        val myId = if (isSoloTestMode) currentRoom.host.id else myProfile.myPlayerId
         viewModelScope.launch {
             soundManager.playReactionSound()
             val result = submitVerdictUseCase(
                 roomCode = currentRoom.roomCode,
-                playerId = myProfile.myPlayerId,
+                playerId = myId,
                 verdict = verdict
             )
             if (result.isSuccess) {
@@ -250,6 +256,9 @@ class GameViewModel(
                 _roomState.value = updated
                 parseGameState(updated)
                 checkMatchEnd(updated)
+                if (isSoloTestMode) {
+                    triggerBotTurnIfNeeded()
+                }
             } else {
                 _viewEffect.emit(GameViewEffect.ShowToast(result.exceptionOrNull()?.message ?: "Failed to submit verdict"))
             }
@@ -259,13 +268,14 @@ class GameViewModel(
     fun passTurnOnTimeout() {
         val currentRoom = _roomState.value ?: return
         if (currentRoom.status != GameStatus.IN_PROGRESS) return
-        if (!isSoloTestMode && currentRoom.currentTurn != myProfile.myPlayerId) return
+        val myId = if (isSoloTestMode) currentRoom.host.id else myProfile.myPlayerId
+        if (currentRoom.currentTurn != myId) return
 
         viewModelScope.launch {
             _viewEffect.emit(GameViewEffect.ShowToast("Turn timed out! Turn passed to partner."))
             val result = makeMoveUseCase(
                 roomCode = currentRoom.roomCode,
-                playerId = if (isSoloTestMode) currentRoom.currentTurn else myProfile.myPlayerId,
+                playerId = myId,
                 move = mapOf("isTimeout" to true),
                 clientVersion = currentRoom.version
             )
@@ -274,6 +284,154 @@ class GameViewModel(
                 _roomState.value = updated
                 parseGameState(updated)
                 checkMatchEnd(updated)
+                if (isSoloTestMode) {
+                    triggerBotTurnIfNeeded()
+                }
+            }
+        }
+    }
+
+    private var botJob: Job? = null
+
+    fun triggerBotTurnIfNeeded() {
+        if (!isSoloTestMode) return
+        val room = _roomState.value ?: return
+        if (room.status != GameStatus.IN_PROGRESS) return
+        val partnerId = room.partner?.id ?: "P_PartnerTest"
+
+        botJob?.cancel()
+        botJob = viewModelScope.launch {
+            when (SoloBotEngine.currentMode) {
+                BotBehaviorMode.SIMULATE_LOST_CONNECTION -> {
+                    delay(500)
+                    _viewEffect.emit(GameViewEffect.ShowConnectionLostDialog(true, "Bot simulated: Partner lost connection."))
+                    return@launch
+                }
+                BotBehaviorMode.SIMULATE_TIMEOUT -> {
+                    // Bot intentionally does not play so human can test turn timeout
+                    return@launch
+                }
+                BotBehaviorMode.RANDOM_CHAOS -> {
+                    if (Math.random() < 0.25) {
+                        _viewEffect.emit(GameViewEffect.ShowConnectionLostDialog(true, "Bot: Simulating connection lag..."))
+                        delay(3500)
+                        _viewEffect.emit(GameViewEffect.ShowConnectionLostDialog(false))
+                    }
+                }
+                BotBehaviorMode.SMART -> {
+                    // Continue normally
+                }
+            }
+
+            when (room.gameType) {
+                GameType.TIC_TAC_TOE -> {
+                    if (room.currentTurn == partnerId) {
+                        delay(900)
+                        val tttState = _ticTacToeState.value
+                        val botMoveIndex = SoloBotEngine.calculateTicTacToeMove(
+                            board = tttState.board,
+                            botSymbol = "O",
+                            humanSymbol = "X"
+                        )
+                        if (botMoveIndex in 0..8) {
+                            val result = makeMoveUseCase(
+                                roomCode = room.roomCode,
+                                playerId = partnerId,
+                                move = mapOf("cellIndex" to botMoveIndex),
+                                clientVersion = room.version
+                            )
+                            if (result.isSuccess) {
+                                val updated = result.getOrThrow()
+                                _roomState.value = updated
+                                parseGameState(updated)
+                                checkMatchEnd(updated)
+                            }
+                        }
+                    }
+                }
+                GameType.DOTS_AND_BOXES -> {
+                    if (room.currentTurn == partnerId) {
+                        delay(900)
+                        val dnbState = _dotsAndBoxesState.value
+                        val lineKey = SoloBotEngine.calculateDotsAndBoxesMove(
+                            claimedLines = dnbState.claimedLines,
+                            claimedBoxes = dnbState.claimedBoxes,
+                            gridSize = dnbState.gridSize
+                        )
+                        if (lineKey.isNotEmpty()) {
+                            val result = makeMoveUseCase(
+                                roomCode = room.roomCode,
+                                playerId = partnerId,
+                                move = mapOf("lineKey" to lineKey),
+                                clientVersion = room.version
+                            )
+                            if (result.isSuccess) {
+                                val updated = result.getOrThrow()
+                                _roomState.value = updated
+                                parseGameState(updated)
+                                checkMatchEnd(updated)
+                                if (updated.currentTurn == partnerId && updated.status == GameStatus.IN_PROGRESS) {
+                                    triggerBotTurnIfNeeded()
+                                }
+                            }
+                        }
+                    }
+                }
+                GameType.COUPLES_QUIZ -> {
+                    val quiz = _quizState.value
+                    if (!quiz.hasPlayerAnswered(partnerId)) {
+                        delay(1200)
+                        val simOption = SoloBotEngine.calculateQuizMove(quiz.currentQuestionIndex)
+                        val simMove = QuizAnswerMove(quiz.currentQuestionIndex, simOption)
+                        val result = makeMoveUseCase(
+                            roomCode = room.roomCode,
+                            playerId = partnerId,
+                            move = simMove,
+                            clientVersion = room.version
+                        )
+                        if (result.isSuccess) {
+                            val updated = result.getOrThrow()
+                            _roomState.value = updated
+                            parseGameState(updated)
+                            checkMatchEnd(updated)
+                        }
+                    }
+                }
+                GameType.SOUL_SYNC -> {
+                    val ss = _soulSyncState.value
+                    if (ss.phase.equals("ANSWERING", ignoreCase = true) && !ss.hasPlayerAnswered(isHost = false)) {
+                        delay(1200)
+                        val simAnswer = SoloBotEngine.calculateSoulSyncAnswer()
+                        val result = makeMoveUseCase(
+                            roomCode = room.roomCode,
+                            playerId = partnerId,
+                            move = mapOf("text" to simAnswer),
+                            clientVersion = room.version
+                        )
+                        if (result.isSuccess) {
+                            val updated = result.getOrThrow()
+                            _roomState.value = updated
+                            parseGameState(updated)
+                            checkMatchEnd(updated)
+                            triggerBotTurnIfNeeded()
+                        }
+                    } else if (ss.phase.equals("JUDGING", ignoreCase = true) && !ss.isPlayerReadyToJudge(isHost = false)) {
+                        delay(1200)
+                        val verdict = SoloBotEngine.calculateSoulSyncVerdict()
+                        val result = submitVerdictUseCase(
+                            roomCode = room.roomCode,
+                            playerId = partnerId,
+                            verdict = verdict
+                        )
+                        if (result.isSuccess) {
+                            val updated = result.getOrThrow()
+                            _roomState.value = updated
+                            parseGameState(updated)
+                            checkMatchEnd(updated)
+                            triggerBotTurnIfNeeded()
+                        }
+                    }
+                }
             }
         }
     }

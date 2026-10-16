@@ -67,6 +67,22 @@
             android:src="@drawable/ic_rematch" />
     </LinearLayout>
 
+    <!-- Solo Bot Debug Controller Chip -->
+    <TextView
+        android:id="@+id/btnBotModeSelector"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_rounded_card"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="5dp"
+        android:text="Bot: Smart AI"
+        android:textColor="@color/mint_accent"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
     <!-- Dual PvP HUD -->
     <com.pookie.game.presentation.ui.views.DualPvpHudView
         android:id="@+id/dualPvpHud"

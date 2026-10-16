@@ -50,6 +50,12 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
         style = Paint.Style.FILL
     }
 
+    private val boxNumberTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#FFFFFF")
+        textAlign = Paint.Align.CENTER
+        typeface = android.graphics.Typeface.DEFAULT_BOLD
+    }
+
     private var hostPlayerId: String = ""
     private var claimedLines: Map<String, String> = emptyMap()
     private var claimedBoxes: Map<String, String> = emptyMap()
@@ -141,6 +147,12 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
                     val rect = RectF(left + 6f, top + 6f, right - 6f, bottom - 6f)
                     val paint = if (owner == hostPlayerId) hostBoxPaint else partnerBoxPaint
                     canvas.drawRoundRect(rect, 12f, 12f, paint)
+
+                    // Draw box number
+                    val boxNum = (r * gridSize + c + 1).toString()
+                    boxNumberTextPaint.textSize = step * 0.35f
+                    val textY = top + step / 2f - (boxNumberTextPaint.descent() + boxNumberTextPaint.ascent()) / 2f
+                    canvas.drawText(boxNum, left + step / 2f, textY, boxNumberTextPaint)
                 }
             }
         }

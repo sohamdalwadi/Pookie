@@ -40,7 +40,7 @@ class MockGameRepository : IGameRepository {
             GameType.TIC_TAC_TOE -> gson.toJson(ticTacToeEngine.createInitialState(hostId, null))
             GameType.DOTS_AND_BOXES -> gson.toJson(dotsAndBoxesEngine.createInitialState(hostId, null, gridSize))
             GameType.COUPLES_QUIZ -> gson.toJson(couplesQuizEngine.createInitialState(hostId, null))
-            GameType.SOUL_SYNC -> gson.toJson(com.pookie.game.domain.model.SoulSyncState())
+            GameType.SOUL_SYNC -> gson.toJson(createInitialSoulSyncState())
         }
 
         val room = Room(
@@ -170,7 +170,7 @@ class MockGameRepository : IGameRepository {
                 gson.toJson(dotsAndBoxesEngine.createInitialState(room.host.id, room.partner?.id, currentGridSize))
             }
             GameType.COUPLES_QUIZ -> gson.toJson(couplesQuizEngine.createInitialState(room.host.id, room.partner?.id))
-            GameType.SOUL_SYNC -> gson.toJson(SoulSyncState())
+            GameType.SOUL_SYNC -> gson.toJson(createInitialSoulSyncState())
         }
 
         val reset = room.copy(
@@ -184,11 +184,25 @@ class MockGameRepository : IGameRepository {
         return Result.success(reset)
     }
 
+    private fun createInitialSoulSyncState(): SoulSyncState {
+        val sessionPrompts = com.pookie.game.domain.engine.SoulSyncPromptCatalog.generateSessionPrompts(10)
+        val first = sessionPrompts.first()
+        return SoulSyncState(
+            currentRound = 1,
+            totalRounds = sessionPrompts.size,
+            promptText = first.template,
+            targetRole = first.targetRole,
+            prompts = sessionPrompts,
+            phase = "ANSWERING",
+            coupleScore = 0
+        )
+    }
+
     override suspend fun submitVerdict(roomCode: String, playerId: String, verdict: String): Result<Room> {
         val room = rooms[roomCode] ?: return Result.failure(Exception("Room not found"))
         val state = try {
-            gson.fromJson(room.gameStateJson, SoulSyncState::class.java) ?: SoulSyncState()
-        } catch (_: Exception) { SoulSyncState() }
+            gson.fromJson(room.gameStateJson, SoulSyncState::class.java) ?: createInitialSoulSyncState()
+        } catch (_: Exception) { createInitialSoulSyncState() }
 
         val isHost = playerId == room.host.id
         val roleKey = if (isHost) "host" else "partner"
@@ -208,9 +222,13 @@ class MockGameRepository : IGameRepository {
                     completed = true
                 )
             } else {
+                val nextPrompt = state.prompts.getOrNull(nextRound - 1)
                 nextState = SoulSyncState(
                     currentRound = nextRound,
                     totalRounds = state.totalRounds,
+                    promptText = nextPrompt?.template ?: state.promptText,
+                    targetRole = nextPrompt?.targetRole ?: "HOST",
+                    prompts = state.prompts,
                     coupleScore = newScore,
                     lastRoundOutcome = if (isMatch) "MATCH" else "MISS"
                 )

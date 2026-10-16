@@ -20,6 +20,7 @@ class SoulSyncView @JvmOverloads constructor(
 
     private val textSoulSyncRound: TextView
     private val textSoulSyncScore: TextView
+    private val textTargetBadge: TextView
     private val textSoulSyncPrompt: TextView
 
     // Phase 1: Answering
@@ -46,6 +47,7 @@ class SoulSyncView @JvmOverloads constructor(
 
         textSoulSyncRound = root.findViewById(R.id.textSoulSyncRound)
         textSoulSyncScore = root.findViewById(R.id.textSoulSyncScore)
+        textTargetBadge = root.findViewById(R.id.textTargetBadge)
         textSoulSyncPrompt = root.findViewById(R.id.textSoulSyncPrompt)
 
         containerAnsweringPhase = root.findViewById(R.id.containerAnsweringPhase)
@@ -94,7 +96,9 @@ class SoulSyncView @JvmOverloads constructor(
     ) {
         textSoulSyncRound.text = "Round ${state.currentRound} / ${state.totalRounds}"
         textSoulSyncScore.text = "Couple Score: ${state.coupleScore}"
-        textSoulSyncPrompt.text = state.promptText
+        val targetName = state.getTargetDisplayName(hostName, partnerName)
+        textTargetBadge.text = "About $targetName"
+        textSoulSyncPrompt.text = state.getFormattedPrompt(hostName, partnerName)
 
         val isJudging = state.phase.equals("JUDGING", ignoreCase = true) || state.answersRevealed
 
