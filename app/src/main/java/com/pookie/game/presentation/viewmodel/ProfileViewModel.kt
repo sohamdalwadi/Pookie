@@ -28,11 +28,13 @@ class ProfileViewModel(
         return randomName
     }
 
-    fun updateProfile(myNickname: String, partnerNickname: String, vibeTag: String) {
-        val updated = _profileState.value.copy(
+    fun updateProfile(myNickname: String, gender: com.pookie.game.domain.model.Gender, partnerNickname: String = "", vibeTag: String = "") {
+        val current = _profileState.value
+        val updated = current.copy(
             myNickname = myNickname.trim(),
-            partnerNickname = partnerNickname.trim(),
-            vibeTag = vibeTag
+            gender = gender,
+            partnerNickname = partnerNickname.trim().ifEmpty { current.partnerNickname },
+            vibeTag = vibeTag.ifEmpty { current.vibeTag }
         )
         preferencesRepository.saveCoupleProfile(updated)
         _profileState.value = updated

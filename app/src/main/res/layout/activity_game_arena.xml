@@ -105,37 +105,58 @@
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- Bottom Reactions Floating Bar -->
+    <!-- New Interactive Bottom Bar with Middle Big Round Nudge Button -->
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="56dp"
+        android:layout_height="64dp"
         android:layout_gravity="center_horizontal"
         android:background="@drawable/bg_rounded_card"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="16dp">
+        android:paddingHorizontal="12dp">
 
+        <!-- Reaction: Heart -->
         <ImageView
             android:id="@+id/btnReactionHeart"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
             android:padding="8dp"
             android:src="@drawable/ic_reaction_heart" />
 
+        <!-- Reaction: Thumbs Up -->
+        <ImageView
+            android:id="@+id/btnReactionThumbsUp"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_marginStart="8dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_thumbs_up" />
+
+        <!-- Middle Big Round Nudge Button -->
+        <ImageView
+            android:id="@+id/btnNudge"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_marginHorizontal="14dp"
+            android:background="@drawable/bg_nudge_circle"
+            android:padding="12dp"
+            android:src="@drawable/ic_nudge" />
+
+        <!-- Reaction: Thumbs Down -->
+        <ImageView
+            android:id="@+id/btnReactionThumbsDown"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_thumbs_down" />
+
+        <!-- Reaction: Lightning -->
         <ImageView
             android:id="@+id/btnReactionLightning"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="16dp"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_marginStart="8dp"
             android:padding="8dp"
             android:src="@drawable/ic_reaction_lightning" />
-
-        <ImageView
-            android:id="@+id/btnReactionCrown"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="16dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_reaction_crown" />
     </LinearLayout>
 </LinearLayout>

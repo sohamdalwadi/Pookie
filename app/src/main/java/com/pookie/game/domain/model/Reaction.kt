@@ -10,7 +10,10 @@ data class Reaction(
 enum class ReactionType(val code: String, val drawableResName: String) {
     HEART("HEART", "ic_reaction_heart"),
     LIGHTNING("LIGHTNING", "ic_reaction_lightning"),
-    CROWN("CROWN", "ic_reaction_crown");
+    CROWN("CROWN", "ic_reaction_crown"),
+    THUMBS_UP("THUMBS_UP", "ic_thumbs_up"),
+    THUMBS_DOWN("THUMBS_DOWN", "ic_thumbs_down"),
+    NUDGE("NUDGE", "ic_nudge");
 
     companion object {
         fun fromCode(code: String?): ReactionType = entries.find { it.code.equals(code, ignoreCase = true) } ?: HEART

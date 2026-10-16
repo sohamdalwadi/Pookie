@@ -38,7 +38,8 @@ class LobbyViewModel(
                 hostId = profile.myPlayerId,
                 hostName = profile.myNickname.ifBlank { "Host" },
                 gameType = gameType,
-                gridSize = gridSize
+                gridSize = gridSize,
+                gender = profile.gender.id
             )
             if (result.isSuccess) {
                 _roomActionState.value = Resource.Success(result.getOrThrow())
@@ -56,7 +57,8 @@ class LobbyViewModel(
             val result = joinRoomUseCase(
                 roomCode = roomCode,
                 partnerId = profile.myPlayerId,
-                partnerName = profile.myNickname.ifBlank { "Player" }
+                partnerName = profile.myNickname.ifBlank { "Player" },
+                gender = profile.gender.id
             )
             if (result.isSuccess) {
                 _roomActionState.value = Resource.Success(result.getOrThrow())

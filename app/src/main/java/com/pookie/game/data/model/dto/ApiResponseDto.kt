@@ -20,7 +20,8 @@ data class ApiErrorDto(
 data class PlayerDto(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
-    @SerializedName("score") val score: Int? = 0
+    @SerializedName("score") val score: Int? = 0,
+    @SerializedName("gender") val gender: String? = "MALE"
 )
 
 data class RematchStateDto(

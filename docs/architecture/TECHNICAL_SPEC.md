@@ -704,3 +704,34 @@ To ensure zero quota exhaustion and protect mobile battery, the Anti Gravity cli
 1. **Optimistic Locking:** Every state mutation requires `expectedVersion`. If two requests overlap, the second request fails with `CONCURRENCY_CONFLICT`, preventing board overwrites.
 2. **Server-Side Validation:** Move validity (e.g. cell not taken, turn order, line availability) is validated in the Apps Script before writing to the sheet.
 3. **Player Authentication:** Lightweight UUIDv4 `HostId` / `PartnerId` tokens stored in client local storage prevent unauthorized third parties from spoofing turns.
+
+---
+
+## 6. Player Profiles, Dual PvP HUD & In-Game Social Dynamics
+
+### 6.1 Gender-Based Profile Avatars
+- Profiles capture player nickname and binary gender (`MALE` / `FEMALE`).
+- Instead of generic placeholders, dedicated crisp SVG vector drawables (`ic_avatar_male.xml`, `ic_avatar_female.xml`) represent players on the profile setup screen, dual PvP HUD, and victory summaries.
+- Player genders are exchanged during room creation and join operations, serialized in `gameState.playerGenders`, and mapped on clients.
+
+### 6.2 Circular Turn Timer (`CircularTurnTimerView`)
+- To elevate turn clarity without occupying bulky screen real estate, a sleek circular countdown ring hugs the outer border of the active player's circular avatar:
+  - **Dynamic Arc Sweep:** Continuously animates from 360° to 0° over the allotted turn window (default 30 seconds).
+  - **Color State Transition:** Transitions smoothly from vibrant coral/primary pink (`#F06292`) during normal time to alert ruby crimson (`#E53935`) when remaining time falls below 25%.
+  - **Auto-Switching:** Automatically shifts to the opponent's avatar on turn change and resets progress.
+
+### 6.3 Dual PvP HUD & Below-Profile Reaction Display
+- Avatars sit on opposing flanks of the arena header (Host vs Partner) with live match scores in between.
+- When a player receives a reaction, a rounded badge pops in with a smooth spring scale animation directly beneath that player's profile avatar and auto-dismisses after 2.5 seconds.
+
+### 6.4 Arena Bottom Action Bar & Nudge Buzzer
+- **Central Nudge Button:** An oversized, elevated circular action button (`bg_nudge_circle.xml`) sits prominently in the center of the bottom arena bar.
+  - Tapping sends an instant `NUDGE` event.
+  - Triggers a synchronized haptic buzz pattern on the receiving partner's device to playfully alert them when it's their turn.
+- **Flanking Reaction Bar:** Fast-reaction buttons flank the central nudge button:
+  - `HEART` (Romantic appreciation)
+  - `THUMBS_UP` (Encouragement / Good move)
+  - `THUMBS_DOWN` (Playful teasing)
+  - `LIGHTNING` (Competitive energy)
+- **Zero-Emoji Architecture:** All reactions and buttons render pure vector SVGs to maintain clean, modern design standards without platform emoji inconsistencies.
+

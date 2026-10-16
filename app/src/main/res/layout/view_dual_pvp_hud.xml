@@ -13,32 +13,48 @@
         android:gravity="center_vertical">
 
         <!-- Player 1 Container -->
-        <FrameLayout
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-            <View
-                android:id="@+id/avatar1Ring"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:background="@drawable/bg_avatar_ring"
-                android:visibility="invisible" />
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="64dp">
 
+                <com.pookie.game.presentation.ui.views.CircularTurnTimerView
+                    android:id="@+id/avatar1TimerView"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp" />
+
+                <ImageView
+                    android:id="@+id/avatar1Icon"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_reaction_bubble"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_avatar_male" />
+
+                <ImageView
+                    android:id="@+id/reaction1Icon"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="top|end"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <!-- Reaction displayed below profile -->
             <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center"
+                android:id="@+id/reaction1BelowIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="4dp"
                 android:background="@drawable/bg_reaction_bubble"
-                android:padding="10dp"
-                android:src="@drawable/ic_dice" />
-
-            <ImageView
-                android:id="@+id/reaction1Icon"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="top|end"
-                android:visibility="gone" />
-        </FrameLayout>
+                android:padding="6dp"
+                android:visibility="invisible" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -100,32 +116,48 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <FrameLayout
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-            <View
-                android:id="@+id/avatar2Ring"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:background="@drawable/bg_avatar_ring"
-                android:visibility="invisible" />
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="64dp">
 
+                <com.pookie.game.presentation.ui.views.CircularTurnTimerView
+                    android:id="@+id/avatar2TimerView"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp" />
+
+                <ImageView
+                    android:id="@+id/avatar2Icon"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_reaction_bubble"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_avatar_female" />
+
+                <ImageView
+                    android:id="@+id/reaction2Icon"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="top|start"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <!-- Reaction displayed below profile -->
             <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center"
+                android:id="@+id/reaction2BelowIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="4dp"
                 android:background="@drawable/bg_reaction_bubble"
-                android:padding="10dp"
-                android:src="@drawable/ic_dice" />
-
-            <ImageView
-                android:id="@+id/reaction2Icon"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="top|start"
-                android:visibility="gone" />
-        </FrameLayout>
+                android:padding="6dp"
+                android:visibility="invisible" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Turn Banner -->
@@ -133,7 +165,7 @@
         android:id="@+id/textTurnStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="8dp"
         android:gravity="center"
         android:textColor="@color/mint_accent"
         android:textSize="14sp"

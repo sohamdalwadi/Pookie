@@ -73,8 +73,10 @@ class GameArenaActivity : AppCompatActivity() {
         val couplesQuizView = findViewById<CouplesQuizView>(R.id.couplesQuizView)
 
         val btnReactionHeart = findViewById<ImageView>(R.id.btnReactionHeart)
+        val btnReactionThumbsUp = findViewById<ImageView>(R.id.btnReactionThumbsUp)
+        val btnNudge = findViewById<ImageView>(R.id.btnNudge)
+        val btnReactionThumbsDown = findViewById<ImageView>(R.id.btnReactionThumbsDown)
         val btnReactionLightning = findViewById<ImageView>(R.id.btnReactionLightning)
-        val btnReactionCrown = findViewById<ImageView>(R.id.btnReactionCrown)
 
         textArenaRoomCode.text = initialRoom.roomCode
 
@@ -98,15 +100,31 @@ class GameArenaActivity : AppCompatActivity() {
             viewModel.requestRematch()
         }
 
-        // Live Reaction buttons
+        // Live Reaction buttons & Middle Nudge Button
         btnReactionHeart.setOnClickListener {
             viewModel.sendReaction(ReactionType.HEART)
         }
+        btnReactionThumbsUp.setOnClickListener {
+            viewModel.sendReaction(ReactionType.THUMBS_UP)
+        }
+        btnNudge.setOnClickListener {
+            btnNudge.animate().scaleX(1.3f).scaleY(1.3f).setDuration(120).withEndAction {
+                btnNudge.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start()
+            }.start()
+            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator?.vibrate(android.os.VibrationEffect.createOneShot(100, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(100)
+            }
+            viewModel.sendReaction(ReactionType.NUDGE)
+        }
+        btnReactionThumbsDown.setOnClickListener {
+            viewModel.sendReaction(ReactionType.THUMBS_DOWN)
+        }
         btnReactionLightning.setOnClickListener {
             viewModel.sendReaction(ReactionType.LIGHTNING)
-        }
-        btnReactionCrown.setOnClickListener {
-            viewModel.sendReaction(ReactionType.CROWN)
         }
 
         // Setup Board Views according to Game Type
@@ -196,6 +214,15 @@ class GameArenaActivity : AppCompatActivity() {
                     }
                     is GameViewEffect.PlayReactionAnimation -> {
                         dualPvpHud.triggerReaction(effect.isPlayer1, effect.reactionType)
+                        if (effect.reactionType == ReactionType.NUDGE) {
+                            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 150, 100, 150), -1))
+                            } else {
+                                @Suppress("DEPRECATION")
+                                vibrator?.vibrate(longArrayOf(0, 150, 100, 150), -1)
+                            }
+                        }
                     }
                     is GameViewEffect.ShowRematchDialog -> {
                         showRematchDialog(effect.isVictory, effect.isDraw, effect.summary)

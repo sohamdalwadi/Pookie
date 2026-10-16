@@ -9,11 +9,12 @@ class CreateRoomUseCase(private val gameRepository: IGameRepository) {
         hostId: String,
         hostName: String,
         gameType: GameType,
-        gridSize: Int = 3
+        gridSize: Int = 3,
+        gender: String = "MALE"
     ): Result<Room> {
         if (hostName.isBlank()) {
             return Result.failure(IllegalArgumentException("Host name cannot be empty."))
         }
-        return gameRepository.createRoom(hostId, hostName.trim(), gameType, gridSize)
+        return gameRepository.createRoom(hostId, hostName.trim(), gameType, gridSize, gender)
     }
 }

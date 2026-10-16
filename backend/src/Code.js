@@ -223,6 +223,8 @@ function findRoomRowIndex(sheet, roomCode) {
 }
 
 function rowToRoomObject(row) {
+  const gameState = row[8] ? JSON.parse(row[8]) : null;
+  const playerGenders = (gameState && gameState.playerGenders) ? gameState.playerGenders : {};
   return {
     roomCode: row[0],
     status: row[1],
@@ -230,15 +232,17 @@ function rowToRoomObject(row) {
     host: {
       id: row[3],
       name: row[4],
-      score: parseInt(row[9], 10) || 0
+      score: parseInt(row[9], 10) || 0,
+      gender: playerGenders[row[3]] || "MALE"
     },
     partner: row[5] ? {
       id: row[5],
       name: row[6],
-      score: parseInt(row[10], 10) || 0
+      score: parseInt(row[10], 10) || 0,
+      gender: playerGenders[row[5]] || "FEMALE"
     } : null,
     currentTurn: row[7],
-    gameState: row[8] ? JSON.parse(row[8]) : null,
+    gameState: gameState,
     rematchState: row[11] ? JSON.parse(row[11]) : { hostReady: false, partnerReady: false },
     createdAt: row[12],
     lastActivity: row[13],
@@ -343,11 +347,17 @@ function handleCreateRoom(payload) {
     initialGameState = { currentQuestionIndex: 0, totalQuestions: 5, questions: [], hostAnswer: null, partnerAnswer: null, answersRevealed: false, roundMatches: 0, completed: false };
   }
 
+  const hostGender = payload.gender || "MALE";
+  if (!initialGameState.playerGenders) {
+    initialGameState.playerGenders = {};
+  }
+  initialGameState.playerGenders[hostId] = hostGender;
+
   const room = {
     roomCode: roomCode,
     status: "WAITING_FOR_PARTNER",
     gameType: gameType,
-    host: { id: hostId, name: hostName, score: 0 },
+    host: { id: hostId, name: hostName, score: 0, gender: hostGender },
     partner: null,
     currentTurn: "HOST",
     gameState: initialGameState,
@@ -389,7 +399,12 @@ function handleJoinRoom(payload) {
       return jsonError("ROOM_FULL", "This room already has two active players.");
     }
 
-    room.partner = { id: partnerId, name: partnerName, score: 0 };
+    const partnerGender = payload.gender || "FEMALE";
+    if (!room.gameState) room.gameState = {};
+    if (!room.gameState.playerGenders) room.gameState.playerGenders = {};
+    room.gameState.playerGenders[partnerId] = partnerGender;
+
+    room.partner = { id: partnerId, name: partnerName, score: 0, gender: partnerGender };
     room.status = "PLAYING";
     room.lastActivity = new Date().toISOString();
     room.version += 1;

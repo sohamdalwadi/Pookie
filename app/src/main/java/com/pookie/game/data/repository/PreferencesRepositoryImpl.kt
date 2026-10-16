@@ -3,6 +3,7 @@ package com.pookie.game.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import com.pookie.game.domain.model.CoupleProfile
+import com.pookie.game.domain.model.Gender
 import com.pookie.game.domain.repository.IPreferencesRepository
 import java.util.UUID
 
@@ -19,6 +20,7 @@ class PreferencesRepositoryImpl(
         private const val KEY_BACKEND_URL = "backend_custom_url"
         private const val KEY_MY_PLAYER_ID = "my_player_id"
         private const val KEY_MY_NICKNAME = "my_nickname"
+        private const val KEY_GENDER = "gender"
         private const val KEY_PARTNER_NICKNAME = "partner_nickname"
         private const val KEY_VIBE_TAG = "vibe_tag"
         private const val KEY_SOUND_ENABLED = "sound_enabled"
@@ -48,6 +50,7 @@ class PreferencesRepositoryImpl(
         return CoupleProfile(
             myPlayerId = myId,
             myNickname = prefs.getString(KEY_MY_NICKNAME, "") ?: "",
+            gender = Gender.fromId(prefs.getString(KEY_GENDER, Gender.MALE.id)),
             partnerNickname = prefs.getString(KEY_PARTNER_NICKNAME, "") ?: "",
             vibeTag = prefs.getString(KEY_VIBE_TAG, "🍕 Foodies") ?: "🍕 Foodies",
             soundEnabled = prefs.getBoolean(KEY_SOUND_ENABLED, true)
@@ -58,6 +61,7 @@ class PreferencesRepositoryImpl(
         prefs.edit()
             .putString(KEY_MY_PLAYER_ID, profile.myPlayerId)
             .putString(KEY_MY_NICKNAME, profile.myNickname.trim())
+            .putString(KEY_GENDER, profile.gender.id)
             .putString(KEY_PARTNER_NICKNAME, profile.partnerNickname.trim())
             .putString(KEY_VIBE_TAG, profile.vibeTag)
             .putBoolean(KEY_SOUND_ENABLED, profile.soundEnabled)

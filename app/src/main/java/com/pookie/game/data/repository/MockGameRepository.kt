@@ -27,7 +27,13 @@ class MockGameRepository : IGameRepository {
 
     override suspend fun checkHealth(): Result<Boolean> = Result.success(true)
 
-    override suspend fun createRoom(hostId: String, hostName: String, gameType: GameType, gridSize: Int): Result<Room> {
+    override suspend fun createRoom(
+        hostId: String,
+        hostName: String,
+        gameType: GameType,
+        gridSize: Int,
+        gender: String
+    ): Result<Room> {
         val code = "TEST" + (1000..9999).random()
         val initialGameStateJson = when (gameType) {
             GameType.TIC_TAC_TOE -> gson.toJson(ticTacToeEngine.createInitialState(hostId, null))
@@ -39,7 +45,7 @@ class MockGameRepository : IGameRepository {
             roomCode = code,
             status = GameStatus.WAITING,
             gameType = gameType,
-            host = Player(id = hostId, name = hostName, score = 0),
+            host = Player(id = hostId, name = hostName, score = 0, gender = com.pookie.game.domain.model.Gender.fromId(gender)),
             partner = null,
             currentTurn = hostId,
             gameStateJson = initialGameStateJson,
@@ -52,11 +58,16 @@ class MockGameRepository : IGameRepository {
         return Result.success(room)
     }
 
-    override suspend fun joinRoom(roomCode: String, partnerId: String, partnerName: String): Result<Room> {
+    override suspend fun joinRoom(
+        roomCode: String,
+        partnerId: String,
+        partnerName: String,
+        gender: String
+    ): Result<Room> {
         val room = rooms[roomCode] ?: return Result.failure(Exception("Mock room not found: $roomCode"))
         val updated = room.copy(
             status = GameStatus.IN_PROGRESS,
-            partner = Player(id = partnerId, name = partnerName, score = 0),
+            partner = Player(id = partnerId, name = partnerName, score = 0, gender = com.pookie.game.domain.model.Gender.fromId(gender)),
             version = room.version + 1
         )
         rooms[roomCode] = updated

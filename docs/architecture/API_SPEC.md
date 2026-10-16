@@ -25,11 +25,12 @@ Creates a new room session, generates a unique 6-character room code, and regist
     "hostName": "Soham",
     "hostId": "c3f912e6-8c43-4b61-9c12-32f281e0129a",
     "gameType": "DOTS_AND_BOXES",
-    "gridSize": 3
+    "gridSize": 3,
+    "gender": "MALE"
   }
 }
 ```
-> Note: `gridSize` is optional and applies to `DOTS_AND_BOXES`: `3` (Small - 3x3), `4` (Medium - 4x4), or `5` (High - 5x5). Defaults to `3`.
+> Note: `gridSize` is optional and applies to `DOTS_AND_BOXES`: `3` (Small - 3x3), `4` (Medium - 4x4), or `5` (High - 5x5). Defaults to `3`. `gender` can be `MALE` or `FEMALE`.
 - **Response Body:**
 ```json
 {
@@ -43,7 +44,8 @@ Creates a new room session, generates a unique 6-character room code, and regist
     "host": {
       "id": "c3f912e6-8c43-4b61-9c12-32f281e0129a",
       "name": "Soham",
-      "score": 0
+      "score": 0,
+      "gender": "MALE"
     },
     "partner": null,
     "currentTurn": "HOST",
@@ -51,7 +53,10 @@ Creates a new room session, generates a unique 6-character room code, and regist
       "grid": [null, null, null, null, null, null, null, null, null],
       "moveCount": 0,
       "winningLine": null,
-      "winner": null
+      "winner": null,
+      "playerGenders": {
+        "c3f912e6-8c43-4b61-9c12-32f281e0129a": "MALE"
+      }
     },
     "version": 1
   }
@@ -71,7 +76,8 @@ Enables the partner to join an existing game room using the 6-character room cod
   "payload": {
     "roomCode": "POOK99",
     "partnerName": "Pookie",
-    "partnerId": "8e10d293-1b91-45f8-bb32-9c9f023412ab"
+    "partnerId": "8e10d293-1b91-45f8-bb32-9c9f023412ab",
+    "gender": "FEMALE"
   }
 }
 ```
@@ -217,7 +223,27 @@ Submits a rematch request or confirms an existing rematch request.
 
 ---
 
-## 6. Error Codes Catalog
+## 6. Action: `SEND_REACTION`
+Sends a quick reaction or nudge buzzer to the partner during an active game session.
+
+- **Method:** `POST`
+- **Request Body:**
+```json
+{
+  "action": "SEND_REACTION",
+  "payload": {
+    "roomCode": "POOK99",
+    "playerId": "c3f912e6-8c43-4b61-9c12-32f281e0129a",
+    "reaction": "NUDGE"
+  }
+}
+```
+> Supported `reaction` values: `HEART`, `THUMBS_UP`, `THUMBS_DOWN`, `LIGHTNING`, `NUDGE`.
+> `NUDGE` triggers strong tactile haptic feedback on the opponent's device.
+
+---
+
+## 7. Error Codes Catalog
 
 | Error Code | HTTP Status Equivalent | Description |
 |:---|:---:|:---|

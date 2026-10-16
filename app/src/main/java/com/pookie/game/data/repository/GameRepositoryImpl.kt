@@ -5,6 +5,7 @@ import com.pookie.game.data.api.GoogleAppsScriptApi
 import com.pookie.game.data.model.dto.RoomDto
 import com.pookie.game.domain.model.GameStatus
 import com.pookie.game.domain.model.GameType
+import com.pookie.game.domain.model.Gender
 import com.pookie.game.domain.model.Player
 import com.pookie.game.domain.model.ReactionType
 import com.pookie.game.domain.model.RematchState
@@ -29,13 +30,15 @@ class GameRepositoryImpl(
         hostId: String,
         hostName: String,
         gameType: GameType,
-        gridSize: Int
+        gridSize: Int,
+        gender: String
     ): Result<Room> = runCatching {
         val payload = mapOf(
             "hostId" to hostId,
             "hostName" to hostName,
             "gameType" to gameType.id,
-            "gridSize" to gridSize
+            "gridSize" to gridSize,
+            "gender" to gender
         )
         val response = api.post("CREATE_ROOM", payload)
         if (!response.isSuccess || response.data == null) {
@@ -48,12 +51,14 @@ class GameRepositoryImpl(
     override suspend fun joinRoom(
         roomCode: String,
         partnerId: String,
-        partnerName: String
+        partnerName: String,
+        gender: String
     ): Result<Room> = runCatching {
         val payload = mapOf(
             "roomCode" to roomCode,
             "partnerId" to partnerId,
-            "partnerName" to partnerName
+            "partnerName" to partnerName,
+            "gender" to gender
         )
         val response = api.post("JOIN_ROOM", payload)
         if (!response.isSuccess || response.data == null) {
@@ -143,13 +148,15 @@ class GameRepositoryImpl(
             host = Player(
                 id = dto.host.id,
                 name = dto.host.name,
-                score = dto.host.score ?: 0
+                score = dto.host.score ?: 0,
+                gender = Gender.fromId(dto.host.gender)
             ),
             partner = dto.partner?.let {
                 Player(
                     id = it.id,
                     name = it.name,
-                    score = it.score ?: 0
+                    score = it.score ?: 0,
+                    gender = Gender.fromId(it.gender)
                 )
             },
             currentTurn = dto.currentTurn,

@@ -26,11 +26,42 @@ class ProfileSetupActivity : AppCompatActivity() {
 
         val editMyNickname = findViewById<EditText>(R.id.editMyNickname)
         val btnDiceNickname = findViewById<ImageView>(R.id.btnDiceNickname)
+        val btnGenderMale = findViewById<android.view.View>(R.id.btnGenderMale)
+        val btnGenderFemale = findViewById<android.view.View>(R.id.btnGenderFemale)
+        val textGenderMale = findViewById<android.widget.TextView>(R.id.textGenderMale)
+        val textGenderFemale = findViewById<android.widget.TextView>(R.id.textGenderFemale)
         val btnSaveProfile = findViewById<Button>(R.id.btnSaveProfile)
 
         val initialProfile = viewModel.profileState.value
         if (initialProfile.myNickname.isNotBlank()) {
             editMyNickname.setText(initialProfile.myNickname)
+        }
+
+        var selectedGender = initialProfile.gender
+
+        fun updateGenderUI(gender: com.pookie.game.domain.model.Gender) {
+            selectedGender = gender
+            if (gender == com.pookie.game.domain.model.Gender.MALE) {
+                textGenderMale.setTextColor(android.graphics.Color.parseColor("#00D2A0"))
+                textGenderFemale.setTextColor(android.graphics.Color.parseColor("#8E9CAE"))
+                btnGenderMale.alpha = 1.0f
+                btnGenderFemale.alpha = 0.55f
+            } else {
+                textGenderMale.setTextColor(android.graphics.Color.parseColor("#8E9CAE"))
+                textGenderFemale.setTextColor(android.graphics.Color.parseColor("#FF4E78"))
+                btnGenderMale.alpha = 0.55f
+                btnGenderFemale.alpha = 1.0f
+            }
+        }
+
+        updateGenderUI(selectedGender)
+
+        btnGenderMale.setOnClickListener {
+            updateGenderUI(com.pookie.game.domain.model.Gender.MALE)
+        }
+
+        btnGenderFemale.setOnClickListener {
+            updateGenderUI(com.pookie.game.domain.model.Gender.FEMALE)
         }
 
         btnDiceNickname.setOnClickListener {
@@ -52,6 +83,7 @@ class ProfileSetupActivity : AppCompatActivity() {
 
             viewModel.updateProfile(
                 myNickname = myName,
+                gender = selectedGender,
                 partnerNickname = initialProfile.partnerNickname,
                 vibeTag = initialProfile.vibeTag
             )
