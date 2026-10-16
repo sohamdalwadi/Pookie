@@ -92,12 +92,55 @@
                 android:visibility="gone" />
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_rounded_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sharing with your Partner?"
+                android:textColor="@color/mint_accent"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Your partner doesn't need to create a backend! Once you test and save, tap below to show a QR code or copy the link for them."
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:lineSpacingExtra="2dp" />
+
+            <Button
+                android:id="@+id/btnShareBackendQr"
+                style="@style/Widget.Pookie.Button.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginTop="12dp"
+                android:text="Share Backend QR with Partner" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/btnHowToSetup"
             style="@style/Widget.Pookie.Button.Secondary"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="16dp"
             android:text="@string/btn_how_to_setup" />
+
+        <Button
+            android:id="@+id/btnOpenDevDebug"
+            style="@style/Widget.Pookie.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/amber_warning"
+            android:text="🛠️ Developer / Debug Menu" />
     </LinearLayout>
 </ScrollView>

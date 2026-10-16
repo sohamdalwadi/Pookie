@@ -71,12 +71,31 @@ class LobbyActivity : AppCompatActivity() {
 
         // Join Room Click
         btnJoinRoom.setOnClickListener {
-            val code = editRoomCode.text.toString().trim()
-            if (code.isBlank()) {
+            val rawInput = editRoomCode.text.toString().trim()
+            if (rawInput.isBlank()) {
                 Toast.makeText(this, "Please enter room code", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            viewModel.joinRoom(code)
+
+            // Extract room code
+            val codeMatch = Regex("(PK[A-Za-z0-9]{4}|[A-Za-z0-9]{6})").find(rawInput)
+            val cleanCode = codeMatch?.value?.uppercase() ?: rawInput
+
+            // If partner pasted a link/text containing host's backend ID, automatically link it!
+            val backendMatch = Regex("AKfycb[a-zA-Z0-9_-]+").find(rawInput)
+            if (backendMatch != null) {
+                val extractedBackendId = backendMatch.value
+                ServiceLocator.preferencesRepository.saveBackendDeploymentId(extractedBackendId)
+                Toast.makeText(this, "Partner Backend ID automatically configured!", Toast.LENGTH_SHORT).show()
+            }
+
+            viewModel.joinRoom(cleanCode)
+        }
+
+        // Long press header to open Debug Menu
+        textCoupleGreetings.setOnLongClickListener {
+            com.pookie.game.presentation.ui.dialogs.DebugMenuDialog.show(this)
+            true
         }
 
         btnSettings.setOnClickListener {
@@ -133,7 +152,8 @@ class LobbyActivity : AppCompatActivity() {
             if (soundEnabled) "Disable Sound Effects" else "Enable Sound Effects",
             "Reconfigure Backend Deployment ID",
             "Edit Couple Profile",
-            "Check for GitHub OTA Updates"
+            "Check for GitHub OTA Updates",
+            "🛠️ Open Developer / Debug Menu"
         )
 
         AlertDialog.Builder(this)
@@ -153,6 +173,9 @@ class LobbyActivity : AppCompatActivity() {
                     3 -> {
                         viewModel.checkForOtaUpdates("1.0.0")
                         Toast.makeText(this, "Checking GitHub releases...", Toast.LENGTH_SHORT).show()
+                    }
+                    4 -> {
+                        com.pookie.game.presentation.ui.dialogs.DebugMenuDialog.show(this)
                     }
                 }
             }

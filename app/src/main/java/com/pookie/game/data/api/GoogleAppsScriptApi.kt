@@ -1,5 +1,6 @@
 package com.pookie.game.data.api
 
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.pookie.game.data.model.dto.ApiResponseDto
@@ -26,18 +27,35 @@ class GoogleAppsScriptApi(
 
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
+    companion object {
+        private const val TAG = "PookieApi"
+
+        fun sanitizeEndpoint(input: String): String {
+            var cleaned = input.trim().replace("\"", "").replace("'", "")
+            
+            // If full URL
+            if (cleaned.startsWith("http://") || cleaned.startsWith("https://")) {
+                // If ends with /dev, warn or replace with /exec
+                if (cleaned.endsWith("/dev")) {
+                    cleaned = cleaned.substringBeforeLast("/dev") + "/exec"
+                } else if (!cleaned.endsWith("/exec")) {
+                    cleaned = cleaned.trimEnd('/') + "/exec"
+                }
+                return cleaned
+            }
+
+            // If bare Deployment ID (e.g. AKfycb...)
+            val cleanId = cleaned.substringBefore("?").substringBefore("/").trim()
+            return "https://script.google.com/macros/s/$cleanId/exec"
+        }
+    }
+
     private fun resolveUrl(): String {
         val configured = baseUrlProvider()
         if (configured.isNullOrBlank()) {
             throw IllegalStateException("Backend deployment ID or URL is not configured.")
         }
-
-        return if (configured.startsWith("http://") || configured.startsWith("https://")) {
-            configured.trim()
-        } else {
-            // Treat as deployment ID
-            "https://script.google.com/macros/s/${configured.trim()}/exec"
-        }
+        return sanitizeEndpoint(configured)
     }
 
     suspend fun get(action: String, queryParams: Map<String, String> = emptyMap()): ApiResponseDto =
@@ -51,8 +69,11 @@ class GoogleAppsScriptApi(
                 urlBuilder.append("&").append(key).append("=").append(java.net.URLEncoder.encode(value, "UTF-8"))
             }
 
+            val finalUrl = urlBuilder.toString()
+            Log.d(TAG, "GET request: $finalUrl")
+
             val request = Request.Builder()
-                .url(urlBuilder.toString())
+                .url(finalUrl)
                 .get()
                 .build()
 
@@ -68,6 +89,8 @@ class GoogleAppsScriptApi(
                 add("payload", gson.toJsonTree(payload))
             }
 
+            Log.d(TAG, "POST request: $targetUrl with action=$action")
+
             val requestBody = bodyJson.toString().toRequestBody(jsonMediaType)
             val request = Request.Builder()
                 .url(targetUrl)
@@ -79,17 +102,40 @@ class GoogleAppsScriptApi(
 
     private fun executeRequest(request: Request): ApiResponseDto {
         client.newCall(request).execute().use { response ->
-            val responseBody = response.body?.string()
-                ?: throw IOException("Empty response from backend (HTTP ${response.code})")
+            val responseBody = response.body?.string() ?: ""
+            val code = response.code
+            val finalUrl = response.request.url.toString()
 
-            if (!response.isSuccessful && response.code !in 300..399) {
-                throw IOException("Server returned error ${response.code}: $responseBody")
+            Log.d(TAG, "Response code=$code, finalUrl=$finalUrl")
+
+            // Check if redirected to Google Accounts login (HTTP 401 or login redirect)
+            if (code == 401 || finalUrl.contains("accounts.google.com/ServiceLogin") ||
+                responseBody.contains("ServiceLogin") || responseBody.contains("Google Accounts")
+            ) {
+                throw IOException(
+                    "Google Apps Script Error: Access Denied (401 Unauthorized).\n\n" +
+                    "Reason: Your deployment is restricted to Google Accounts.\n\n" +
+                    "Fix in 30 seconds:\n" +
+                    "1. In your Google Sheet, open Extensions > Apps Script.\n" +
+                    "2. Click Deploy > Manage deployments.\n" +
+                    "3. Click the Edit (pencil) icon.\n" +
+                    "4. Change 'Who has access' to 'Anyone' (NOT 'Only myself').\n" +
+                    "5. Click Deploy and retry!"
+                )
+            }
+
+            if (!response.isSuccessful && code !in 300..399) {
+                throw IOException("Server returned error HTTP $code: $responseBody")
+            }
+
+            if (responseBody.isBlank()) {
+                throw IOException("Empty response from backend (HTTP $code)")
             }
 
             return try {
                 gson.fromJson(responseBody, ApiResponseDto::class.java)
             } catch (e: Exception) {
-                throw IOException("Failed to parse backend response: $responseBody", e)
+                throw IOException("Failed to parse backend response as JSON: $responseBody", e)
             }
         }
     }

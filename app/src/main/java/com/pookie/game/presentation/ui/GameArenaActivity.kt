@@ -59,6 +59,7 @@ class GameArenaActivity : AppCompatActivity() {
         }
 
         val initialRoom = gson.fromJson(roomJson, Room::class.java)
+        viewModel.isSoloTestMode = intent.getBooleanExtra("IS_SOLO_TEST_MODE", false)
 
         val btnLeaveArena = findViewById<ImageView>(R.id.btnLeaveArena)
         val textArenaRoomCode = findViewById<TextView>(R.id.textArenaRoomCode)
@@ -152,7 +153,7 @@ class GameArenaActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.ticTacToeState.collect { state ->
                 val currentRoom = viewModel.roomState.value
-                val isMyTurn = currentRoom?.isMyTurn(viewModel.myProfile.myPlayerId) == true
+                val isMyTurn = viewModel.isSoloTestMode || currentRoom?.isMyTurn(viewModel.myProfile.myPlayerId) == true
                 ticTacToeView.setBoard(state.board, state.winningLine, interactive = isMyTurn)
             }
         }
@@ -161,7 +162,7 @@ class GameArenaActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.dotsAndBoxesState.collect { state ->
                 val currentRoom = viewModel.roomState.value
-                val isMyTurn = currentRoom?.isMyTurn(viewModel.myProfile.myPlayerId) == true
+                val isMyTurn = viewModel.isSoloTestMode || currentRoom?.isMyTurn(viewModel.myProfile.myPlayerId) == true
                 dotsAndBoxesView.setState(
                     lines = state.claimedLines,
                     boxes = state.claimedBoxes,
@@ -175,7 +176,7 @@ class GameArenaActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.quizState.collect { state ->
                 val currentRoom = viewModel.roomState.value
-                val isMyTurn = currentRoom?.isMyTurn(viewModel.myProfile.myPlayerId) == true
+                val isMyTurn = viewModel.isSoloTestMode || currentRoom?.isMyTurn(viewModel.myProfile.myPlayerId) == true
                 couplesQuizView.render(
                     quizState = state,
                     myPlayerId = viewModel.myProfile.myPlayerId,

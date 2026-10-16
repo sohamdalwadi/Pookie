@@ -96,9 +96,13 @@ class GameViewModel(
         } catch (_: Exception) {}
     }
 
+    var isSoloTestMode: Boolean = false
+
     fun makeMove(move: Any, piggybackReaction: ReactionType? = null) {
         val currentRoom = _roomState.value ?: return
-        if (currentRoom.currentTurn != myProfile.myPlayerId) {
+        val movingPlayerId = if (isSoloTestMode) currentRoom.currentTurn else myProfile.myPlayerId
+
+        if (!isSoloTestMode && currentRoom.currentTurn != myProfile.myPlayerId) {
             viewModelScope.launch {
                 _viewEffect.emit(GameViewEffect.ShowToast("Waiting for partner's turn!"))
             }
@@ -109,7 +113,7 @@ class GameViewModel(
             soundManager.playMoveSound()
             val result = makeMoveUseCase(
                 roomCode = currentRoom.roomCode,
-                playerId = myProfile.myPlayerId,
+                playerId = movingPlayerId,
                 move = move,
                 clientVersion = currentRoom.version,
                 piggybackReaction = piggybackReaction
@@ -120,6 +124,28 @@ class GameViewModel(
                 _roomState.value = updated
                 parseGameState(updated)
                 checkMatchEnd(updated)
+
+                // If in solo quiz test mode, automatically simulate partner's move if needed
+                if (isSoloTestMode && currentRoom.gameType == GameType.COUPLES_QUIZ) {
+                    val partnerId = currentRoom.partner?.id ?: "P_PartnerTest"
+                    val quizState = _quizState.value
+                    if (!quizState.hasPlayerAnswered(partnerId)) {
+                        val simOption = (0..3).random()
+                        val simMove = QuizAnswerMove(quizState.currentQuestionIndex, simOption)
+                        val partnerResult = makeMoveUseCase(
+                            roomCode = currentRoom.roomCode,
+                            playerId = partnerId,
+                            move = simMove,
+                            clientVersion = updated.version
+                        )
+                        if (partnerResult.isSuccess) {
+                            val partnerUpdated = partnerResult.getOrThrow()
+                            _roomState.value = partnerUpdated
+                            parseGameState(partnerUpdated)
+                            checkMatchEnd(partnerUpdated)
+                        }
+                    }
+                }
             } else {
                 _viewEffect.emit(GameViewEffect.ShowToast(result.exceptionOrNull()?.message ?: "Move failed"))
             }

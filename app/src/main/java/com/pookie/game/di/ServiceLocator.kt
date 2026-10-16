@@ -3,6 +3,7 @@ package com.pookie.game.di
 import android.content.Context
 import com.pookie.game.data.api.GoogleAppsScriptApi
 import com.pookie.game.data.repository.GameRepositoryImpl
+import com.pookie.game.data.repository.MockGameRepository
 import com.pookie.game.data.repository.OtaRepositoryImpl
 import com.pookie.game.data.repository.PreferencesRepositoryImpl
 import com.pookie.game.domain.repository.IGameRepository
@@ -20,6 +21,8 @@ object ServiceLocator {
 
     @Volatile
     private var appContext: Context? = null
+
+    var isMockMode: Boolean = false
 
     fun initialize(context: Context) {
         appContext = context.applicationContext
@@ -44,16 +47,37 @@ object ServiceLocator {
         GameRepositoryImpl(googleAppsScriptApi)
     }
 
+    val mockGameRepository: IGameRepository by lazy {
+        MockGameRepository()
+    }
+
+    val activeGameRepository: IGameRepository
+        get() = if (isMockMode) mockGameRepository else gameRepository
+
     val otaRepository: IOtaRepository by lazy {
         OtaRepositoryImpl()
     }
 
-    // Use cases
-    val createRoomUseCase: CreateRoomUseCase by lazy { CreateRoomUseCase(gameRepository) }
-    val joinRoomUseCase: JoinRoomUseCase by lazy { JoinRoomUseCase(gameRepository) }
-    val getGameStateUseCase: GetGameStateUseCase by lazy { GetGameStateUseCase(gameRepository) }
-    val makeMoveUseCase: MakeMoveUseCase by lazy { MakeMoveUseCase(gameRepository) }
-    val sendReactionUseCase: SendReactionUseCase by lazy { SendReactionUseCase(gameRepository) }
-    val requestRematchUseCase: RequestRematchUseCase by lazy { RequestRematchUseCase(gameRepository) }
-    val checkOtaUpdateUseCase: CheckOtaUpdateUseCase by lazy { CheckOtaUpdateUseCase(otaRepository) }
+    // Dynamic delegate Use Cases that use activeGameRepository
+    val createRoomUseCase: CreateRoomUseCase
+        get() = CreateRoomUseCase(activeGameRepository)
+
+    val joinRoomUseCase: JoinRoomUseCase
+        get() = JoinRoomUseCase(activeGameRepository)
+
+    val getGameStateUseCase: GetGameStateUseCase
+        get() = GetGameStateUseCase(activeGameRepository)
+
+    val makeMoveUseCase: MakeMoveUseCase
+        get() = MakeMoveUseCase(activeGameRepository)
+
+    val sendReactionUseCase: SendReactionUseCase
+        get() = SendReactionUseCase(activeGameRepository)
+
+    val requestRematchUseCase: RequestRematchUseCase
+        get() = RequestRematchUseCase(activeGameRepository)
+
+    val checkOtaUpdateUseCase: CheckOtaUpdateUseCase by lazy {
+        CheckOtaUpdateUseCase(otaRepository)
+    }
 }
