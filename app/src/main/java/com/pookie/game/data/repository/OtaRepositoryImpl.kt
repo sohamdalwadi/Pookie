@@ -22,56 +22,82 @@ class OtaRepositoryImpl : IOtaRepository {
     companion object {
         private const val GITHUB_LATEST_RELEASE_URL =
             "https://api.github.com/repos/sohamdalwadi/Pookie/releases/latest"
+        private const val GITHUB_RELEASES_LIST_URL =
+            "https://api.github.com/repos/sohamdalwadi/Pookie/releases"
     }
 
     override suspend fun checkForUpdates(currentVersion: String): Result<OtaUpdateInfo> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val request = Request.Builder()
-                    .url(GITHUB_LATEST_RELEASE_URL)
-                    .header("User-Agent", "Pookie-Android-Client")
-                    .get()
-                    .build()
+                // First try official latest release
+                var release = fetchRelease(GITHUB_LATEST_RELEASE_URL)
+                // If 404 or empty (e.g. prereleases only), query the releases list and grab the newest release
+                if (release == null) {
+                    release = fetchFirstReleaseFromList(GITHUB_RELEASES_LIST_URL)
+                }
 
-                client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) {
-                        return@runCatching OtaUpdateInfo(
-                            hasUpdate = false,
-                            latestVersion = currentVersion,
-                            currentVersion = currentVersion,
-                            downloadUrl = null,
-                            releaseNotes = null
-                        )
-                    }
-
-                    val body = response.body?.string() ?: return@runCatching OtaUpdateInfo(
+                if (release == null) {
+                    return@runCatching OtaUpdateInfo(
                         hasUpdate = false,
                         latestVersion = currentVersion,
                         currentVersion = currentVersion,
                         downloadUrl = null,
                         releaseNotes = null
                     )
-
-                    val release = gson.fromJson(body, GitHubReleaseDto::class.java)
-                    val rawTag = release.tagName.removePrefix("v").trim()
-                    val normalizedCurrent = currentVersion.removePrefix("v").trim()
-
-                    val apkAsset = release.assets?.find { it.name.endsWith(".apk") }
-                    val downloadUrl = apkAsset?.browserDownloadUrl
-                        ?: "https://github.com/sohamdalwadi/Pookie/releases/latest"
-
-                    val isNewer = compareSemver(rawTag, normalizedCurrent) > 0
-
-                    OtaUpdateInfo(
-                        hasUpdate = isNewer,
-                        latestVersion = release.tagName,
-                        currentVersion = currentVersion,
-                        downloadUrl = downloadUrl,
-                        releaseNotes = release.body
-                    )
                 }
+
+                val tagSemver = Regex("""\d+\.\d+\.\d+""").find(release.tagName)?.value
+                    ?: Regex("""\d+\.\d+\.\d+""").find(release.name ?: "")?.value
+                    ?: release.tagName.removePrefix("v").trim()
+                val normalizedCurrent = currentVersion.removePrefix("v").trim()
+
+                val apkAsset = release.assets?.find { it.name.endsWith(".apk") }
+                val downloadUrl = apkAsset?.browserDownloadUrl
+                    ?: "https://github.com/sohamdalwadi/Pookie/releases/latest"
+
+                val isNewer = compareSemver(tagSemver, normalizedCurrent) > 0
+
+                OtaUpdateInfo(
+                    hasUpdate = isNewer,
+                    latestVersion = "v$tagSemver",
+                    currentVersion = currentVersion,
+                    downloadUrl = downloadUrl,
+                    releaseNotes = release.body
+                )
             }
         }
+
+    private fun fetchRelease(url: String): GitHubReleaseDto? {
+        val request = Request.Builder()
+            .url(url)
+            .header("User-Agent", "Pookie-Android-Client")
+            .get()
+            .build()
+
+        return client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) return null
+            val body = response.body?.string() ?: return null
+            runCatching { gson.fromJson(body, GitHubReleaseDto::class.java) }.getOrNull()
+        }
+    }
+
+    private fun fetchFirstReleaseFromList(url: String): GitHubReleaseDto? {
+        val request = Request.Builder()
+            .url(url)
+            .header("User-Agent", "Pookie-Android-Client")
+            .get()
+            .build()
+
+        return client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) return null
+            val body = response.body?.string() ?: return null
+            val listType = object : com.google.gson.reflect.TypeToken<List<GitHubReleaseDto>>() {}.type
+            val releases: List<GitHubReleaseDto>? = runCatching {
+                gson.fromJson<List<GitHubReleaseDto>>(body, listType)
+            }.getOrNull()
+            releases?.firstOrNull()
+        }
+    }
 
     private fun compareSemver(v1: String, v2: String): Int {
         val parts1 = v1.split(".").mapNotNull { it.toIntOrNull() }

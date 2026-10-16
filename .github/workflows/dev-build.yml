@@ -41,12 +41,42 @@ jobs:
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
           
-          # Copy APK with clear versioned and rolling names
+          # Determine version starting from last git tag (or 0.0.0 if no tag)
+          LAST_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            BASE_VERSION="0.0.0"
+            COMMITS=$(git rev-list --count HEAD)
+          else
+            BASE_VERSION="${LAST_TAG#v}"
+            COMMITS=$(git rev-list --count "${LAST_TAG}..HEAD")
+          fi
+          
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
+          NEW_PATCH=$((PATCH + COMMITS))
+          CALCULATED_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          echo "Calculated version: $CALCULATED_VERSION"
+          echo "version=$CALCULATED_VERSION" >> $GITHUB_OUTPUT
+          
+          # Copy APK with rolling and versioned names
           cp app/build/outputs/apk/debug/app-debug.apk release-apks/Pookie-dev-latest.apk
-          cp app/build/outputs/apk/debug/app-debug.apk release-apks/Pookie-dev-${SHORT_SHA}.apk
+          cp app/build/outputs/apk/debug/app-debug.apk release-apks/Pookie-v${CALCULATED_VERSION}.apk
           
           echo "APK files prepared:"
           ls -la release-apks/
+
+      - name: Clean Existing APKs from Latest Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="dev-latest"
+          echo "Purging old APK assets from $TAG so only the newest APK is kept..."
+          OLD_ASSETS=$(gh release view "$TAG" --json assets -q '.assets[].name' 2>/dev/null || true)
+          for asset in $OLD_ASSETS; do
+            if [[ "$asset" == *.apk ]]; then
+              echo "Deleting old asset: $asset"
+              gh release delete-asset "$TAG" "$asset" -y || true
+            fi
+          done
 
       - name: Upload Dev APK as Workflow Artifact
         uses: actions/upload-artifact@v4
@@ -59,14 +89,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: dev-latest
-          name: "Pookie Dev Testing Build (${{ steps.prepare_apk.outputs.short_sha }})"
+          name: "Pookie Dev Testing Build v${{ steps.prepare_apk.outputs.version }} (${{ steps.prepare_apk.outputs.short_sha }})"
           prerelease: true
-          make_latest: false
+          make_latest: true
           body: |
-            ### 🧪 Pookie Development Testing Build
+            ### 🧪 Pookie Development Testing Build v${{ steps.prepare_apk.outputs.version }}
             
             This build was automatically generated from the **`develop`** branch for QA and internal testing.
             
+            * **Version:** `v${{ steps.prepare_apk.outputs.version }}`
             * **Commit:** `${{ github.sha }}` (${{ steps.prepare_apk.outputs.short_sha }})
             * **Triggered by:** @${{ github.actor }}
             * **Branch:** `develop`
@@ -80,6 +111,6 @@ jobs:
             3. Enter your Google Sheets Backend Deployment ID in the app setup screen to start testing!
           files: |
             release-apks/Pookie-dev-latest.apk
-            release-apks/Pookie-dev-*.apk
+            release-apks/Pookie-v*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,6 +1,7 @@
 package com.pookie.game.presentation.ui
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
+import com.pookie.game.BuildConfig
 import com.pookie.game.R
 import com.pookie.game.di.ServiceLocator
 import com.pookie.game.domain.model.GameType
@@ -153,8 +155,25 @@ class LobbyActivity : AppCompatActivity() {
             }
         }
 
+        // Observe OTA Updates
+        lifecycleScope.launch {
+            viewModel.otaState.collect { updateInfo ->
+                if (updateInfo != null && updateInfo.hasUpdate && !updateInfo.downloadUrl.isNullOrBlank()) {
+                    AlertDialog.Builder(this@LobbyActivity)
+                        .setTitle(R.string.ota_update_available)
+                        .setMessage("A new version (${updateInfo.latestVersion}) is available! Current: v${BuildConfig.VERSION_NAME}.\n\nWould you like to download and install now?")
+                        .setPositiveButton("Download APK") { _, _ ->
+                            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.downloadUrl))
+                            startActivity(browserIntent)
+                        }
+                        .setNegativeButton("Later", null)
+                        .show()
+                }
+            }
+        }
+
         // Check for OTA update on launch
-        viewModel.checkForOtaUpdates("1.0.0")
+        viewModel.checkForOtaUpdates(BuildConfig.VERSION_NAME)
     }
 
     private fun enableGameControls(enabled: Boolean) {
@@ -214,8 +233,8 @@ class LobbyActivity : AppCompatActivity() {
                         startActivity(Intent(this, ProfileSetupActivity::class.java))
                     }
                     "Check for GitHub OTA Updates" -> {
-                        viewModel.checkForOtaUpdates("1.0.0")
-                        Toast.makeText(this, "Checking GitHub releases...", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Checking GitHub releases for v${BuildConfig.VERSION_NAME}...", Toast.LENGTH_SHORT).show()
+                        viewModel.checkForOtaUpdates(BuildConfig.VERSION_NAME)
                     }
                     "Developer Debug Menu" -> {
                         com.pookie.game.presentation.ui.dialogs.DebugMenuDialog.show(this)

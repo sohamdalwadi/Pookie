@@ -23,6 +23,62 @@ if (rawBytes.length > 0) {
 }
 def encryptedDemoKeyHex = hexBuilder.toString()
 
+def computeVersionInfo() {
+    def baseVersion = "0.0.0"
+    def commitCount = 0
+    try {
+        def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
+        def gitCmd = isWindows ? ["cmd", "/c", "git"] : ["git"]
+
+        def tagStdout = new ByteArrayOutputStream()
+        exec {
+            commandLine(*gitCmd, 'describe', '--tags', '--match', 'v[0-9]*', '--abbrev=0')
+            standardOutput = tagStdout
+            ignoreExitValue = true
+        }
+        def latestTag = tagStdout.toString().trim()
+        if (latestTag.startsWith("v")) {
+            latestTag = latestTag.substring(1)
+        }
+
+        if (!latestTag.isEmpty()) {
+            baseVersion = latestTag
+            def countStdout = new ByteArrayOutputStream()
+            exec {
+                commandLine(*gitCmd, 'rev-list', '--count', "v${latestTag}..HEAD")
+                standardOutput = countStdout
+                ignoreExitValue = true
+            }
+            def countStr = countStdout.toString().trim()
+            commitCount = countStr.isInteger() ? countStr.toInteger() : 0
+        } else {
+            def totalStdout = new ByteArrayOutputStream()
+            exec {
+                commandLine(*gitCmd, 'rev-list', '--count', 'HEAD')
+                standardOutput = totalStdout
+                ignoreExitValue = true
+            }
+            def countStr = totalStdout.toString().trim()
+            commitCount = countStr.isInteger() ? countStr.toInteger() : 1
+        }
+    } catch (Exception ignored) {
+        commitCount = 1
+    }
+
+    def parts = baseVersion.split("\\.")
+    def major = parts.length > 0 && parts[0].isInteger() ? parts[0].toInteger() : 0
+    def minor = parts.length > 1 && parts[1].isInteger() ? parts[1].toInteger() : 0
+    def patch = parts.length > 2 && parts[2].isInteger() ? parts[2].toInteger() : 0
+
+    def newPatch = patch + commitCount
+    def versionName = "${major}.${minor}.${newPatch}"
+    def versionCode = Math.max(1, (major * 10000) + (minor * 100) + newPatch)
+
+    return [versionCode: versionCode, versionName: versionName]
+}
+
+def versionInfo = computeVersionInfo()
+
 android {
     namespace 'com.pookie.game'
     compileSdk 34
@@ -31,8 +87,8 @@ android {
         applicationId "com.pookie.game"
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName "1.0.0"
+        versionCode versionInfo.versionCode
+        versionName versionInfo.versionName
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 

@@ -69,7 +69,17 @@ flowchart TD
 
 ## 2. GitHub-Powered Over-The-Air (OTA) Updates
 
-Pookie connects directly to its own GitHub repository to check for updates, download new APK releases, and trigger installation without any external app store dependencies.
+Pookie connects directly to its own GitHub repository to check for updates, download new APK releases, and trigger installation without external app store dependencies.
+
+### 2.0 Dynamic Versioning & Rolling Asset Replacement
+- **Dynamic Tag-Based Versioning (`develop` branch):**
+  - Version is dynamically derived from the last semantic tag (`git describe --tags --match "v[0-9]*"`).
+  - If no tag exists, it starts from `0.0.0` and increments the patch version with the commit count on develop (e.g. `0.0.28`).
+  - `versionCode` and `versionName` are injected into `BuildConfig` at compile time.
+- **Latest Tag Asset Replacement:**
+  - In CI/CD (`.github/workflows/dev-build.yml`), prior to uploading the new build to the `dev-latest` tag, existing `.apk` assets are purged via `gh release delete-asset`.
+  - The latest APK is uploaded as both `Pookie-dev-latest.apk` and `Pookie-v<version>.apk`, with `make_latest: true`.
+  - The client queries `/releases/latest` with automatic fallback to `/releases[0]` and parses semver from release metadata to prompt the user to download and install.
 
 ```mermaid
 sequenceDiagram
