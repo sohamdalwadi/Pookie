@@ -33,6 +33,7 @@ class BackendSetupActivity : AppCompatActivity() {
     private lateinit var imgSetupHeaderIcon: ImageView
     private lateinit var editDeploymentId: EditText
     private lateinit var btnTestAndSave: Button
+    private lateinit var btnSaveAnyway: Button
     private lateinit var btnHowToSetup: Button
     private lateinit var btnShareBackendQr: Button
     private lateinit var btnOpenDevDebug: Button
@@ -49,6 +50,7 @@ class BackendSetupActivity : AppCompatActivity() {
         imgSetupHeaderIcon = findViewById(R.id.imgSetupHeaderIcon)
         editDeploymentId = findViewById(R.id.editDeploymentId)
         btnTestAndSave = findViewById(R.id.btnTestAndSave)
+        btnSaveAnyway = findViewById(R.id.btnSaveAnyway)
         btnHowToSetup = findViewById(R.id.btnHowToSetup)
         btnShareBackendQr = findViewById(R.id.btnShareBackendQr)
         btnOpenDevDebug = findViewById(R.id.btnOpenDevDebug)
@@ -56,6 +58,21 @@ class BackendSetupActivity : AppCompatActivity() {
         textStatusMessage = findViewById(R.id.textStatusMessage)
 
         updateDebugVisibility()
+
+        btnSaveAnyway.setOnClickListener {
+            val input = editDeploymentId.text.toString().trim()
+            if (input.isNotBlank()) {
+                val cleanId = if (input.startsWith("http")) {
+                    input.substringAfter("macros/s/").substringBefore("/exec").substringBefore("?")
+                } else {
+                    input
+                }
+                ServiceLocator.preferencesRepository.saveBackendDeploymentId(cleanId)
+                Toast.makeText(this@BackendSetupActivity, "Saved Deployment ID", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this@BackendSetupActivity, ProfileSetupActivity::class.java))
+                finish()
+            }
+        }
 
         // 7 taps on header icon reveals password dialog
         imgSetupHeaderIcon.setOnClickListener {
@@ -114,11 +131,13 @@ class BackendSetupActivity : AppCompatActivity() {
                     is Resource.Loading -> {
                         progressLoading.visibility = View.VISIBLE
                         btnTestAndSave.isEnabled = false
+                        btnSaveAnyway.visibility = View.GONE
                         textStatusMessage.visibility = View.GONE
                     }
                     is Resource.Success -> {
                         progressLoading.visibility = View.GONE
                         btnTestAndSave.isEnabled = true
+                        btnSaveAnyway.visibility = View.GONE
                         Toast.makeText(this@BackendSetupActivity, R.string.backend_connected_success, Toast.LENGTH_SHORT).show()
                         startActivity(Intent(this@BackendSetupActivity, ProfileSetupActivity::class.java))
                         finish()
@@ -126,6 +145,7 @@ class BackendSetupActivity : AppCompatActivity() {
                     is Resource.Error -> {
                         progressLoading.visibility = View.GONE
                         btnTestAndSave.isEnabled = true
+                        btnSaveAnyway.visibility = View.VISIBLE
                         textStatusMessage.visibility = View.VISIBLE
                         textStatusMessage.text = state.message
                     }

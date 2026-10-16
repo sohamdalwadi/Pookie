@@ -83,6 +83,16 @@
                 android:layout_marginTop="20dp"
                 android:text="@string/btn_test_and_save" />
 
+            <Button
+                android:id="@+id/btnSaveAnyway"
+                style="@style/Widget.Pookie.Button.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:textColor="@color/mint_accent"
+                android:text="Save and Continue Anyway"
+                android:visibility="gone" />
+
             <ProgressBar
                 android:id="@+id/progressLoading"
                 android:layout_width="32dp"
