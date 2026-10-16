@@ -103,6 +103,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone" />
+
+        <com.pookie.game.presentation.ui.views.SoulSyncView
+            android:id="@+id/soulSyncView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
     </FrameLayout>
 
     <!-- New Interactive Bottom Bar with Middle Big Round Nudge Button -->

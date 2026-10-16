@@ -140,6 +140,20 @@ class GameRepositoryImpl(
         mapDtoToRoom(dto)
     }
 
+    override suspend fun submitVerdict(roomCode: String, playerId: String, verdict: String): Result<Room> = runCatching {
+        val payload = mapOf(
+            "roomCode" to roomCode,
+            "playerId" to playerId,
+            "verdict" to verdict
+        )
+        val response = api.post("SUBMIT_VERDICT", payload)
+        if (!response.isSuccess || response.data == null) {
+            throw Exception(response.error?.message ?: "Failed to submit verdict")
+        }
+        val dto = gson.fromJson(response.data, RoomDto::class.java)
+        mapDtoToRoom(dto)
+    }
+
     private fun mapDtoToRoom(dto: RoomDto): Room {
         return Room(
             roomCode = dto.roomCode,

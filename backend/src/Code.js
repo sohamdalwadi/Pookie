@@ -183,6 +183,8 @@ function doPost(e) {
         return handleStartQuiz(payload);
       case "SEND_REACTION":
         return handleSendReaction(payload);
+      case "SUBMIT_VERDICT":
+        return handleSubmitVerdict(payload);
       default:
         return jsonError("INVALID_ACTION", "Unrecognized POST action: " + action);
     }
@@ -313,6 +315,18 @@ function handleGetState(params) {
     }
   }
 
+  // SoulSync Blind Freeform Answer Masking
+  if (room.gameType === "SOUL_SYNC" && room.gameState && !room.gameState.answersRevealed) {
+    const isHost = playerId === room.host.id;
+    if (isHost) {
+      room.gameState.hasPartnerAnswered = (room.gameState.partnerAnswer !== null && room.gameState.partnerAnswer !== undefined);
+      delete room.gameState.partnerAnswer; // Mask partner's answer from Host
+    } else {
+      room.gameState.hasHostAnswered = (room.gameState.hostAnswer !== null && room.gameState.hostAnswer !== undefined);
+      delete room.gameState.hostAnswer; // Mask host's answer from Partner
+    }
+  }
+
   return jsonSuccess({
     isUpdated: true,
     ...room
@@ -345,6 +359,28 @@ function handleCreateRoom(payload) {
     };
   } else if (gameType === "COUPLES_QUIZ") {
     initialGameState = { currentQuestionIndex: 0, totalQuestions: 5, questions: [], hostAnswer: null, partnerAnswer: null, answersRevealed: false, roundMatches: 0, completed: false };
+  } else if (gameType === "SOUL_SYNC") {
+    const defaultPrompts = [
+      "What was the exact moment you knew you had feelings for me?",
+      "What is my absolute favorite comfort food when having a rough day?",
+      "Where was our most memorable date or adventure together?",
+      "What silly habit or quirk of mine always makes you smile?",
+      "What is one dream trip or experience we have to do together?"
+    ];
+    initialGameState = {
+      currentRound: 1,
+      totalRounds: 5,
+      prompts: defaultPrompts,
+      promptText: defaultPrompts[0],
+      phase: "ANSWERING",
+      hostAnswer: null,
+      partnerAnswer: null,
+      answersRevealed: false,
+      verdicts: { host: null, partner: null },
+      playerReady: { host: false, partner: false },
+      coupleScore: 0,
+      completed: false
+    };
   }
 
   const hostGender = payload.gender || "MALE";
@@ -454,8 +490,8 @@ function handleMakeMove(payload) {
 
     const playerRole = isHost ? "HOST" : "PARTNER";
 
-    // Turn verification (except simultaneous Quiz moves)
-    if (room.gameType !== "COUPLES_QUIZ" && room.currentTurn !== playerRole) {
+    // Turn verification (except simultaneous Quiz & SoulSync moves)
+    if (room.gameType !== "COUPLES_QUIZ" && room.gameType !== "SOUL_SYNC" && room.currentTurn !== playerRole) {
       return jsonError("NOT_YOUR_TURN", "It is not your turn to move.");
     }
 
@@ -499,6 +535,10 @@ function handleMakeMove(payload) {
       }
     } else if (room.gameType === "COUPLES_QUIZ") {
       const result = reduceCouplesQuiz(room.gameState, move, playerRole);
+      if (result.error) return jsonError("INVALID_MOVE", result.error);
+      room.gameState = result.nextState;
+    } else if (room.gameType === "SOUL_SYNC") {
+      const result = reduceSoulSync(room.gameState, move, playerRole);
       if (result.error) return jsonError("INVALID_MOVE", result.error);
       room.gameState = result.nextState;
     }
@@ -564,6 +604,28 @@ function handleResetGame(payload) {
           partnerBoxesCount: 0,
           lastMoveAwardedExtraTurn: false,
           winner: null
+        };
+      } else if (room.gameType === "SOUL_SYNC") {
+        const defaultPrompts = [
+          "What was the exact moment you knew you had feelings for me?",
+          "What is my absolute favorite comfort food when having a rough day?",
+          "Where was our most memorable date or adventure together?",
+          "What silly habit or quirk of mine always makes you smile?",
+          "What is one dream trip or experience we have to do together?"
+        ];
+        room.gameState = {
+          currentRound: 1,
+          totalRounds: 5,
+          prompts: defaultPrompts,
+          promptText: defaultPrompts[0],
+          phase: "ANSWERING",
+          hostAnswer: null,
+          partnerAnswer: null,
+          answersRevealed: false,
+          verdicts: { host: null, partner: null },
+          playerReady: { host: false, partner: false },
+          coupleScore: 0,
+          completed: false
         };
       }
     }
@@ -652,6 +714,95 @@ function handleSendReaction(payload) {
 
     sheet.getRange(rowIndex, 1, 1, 15).setValues([roomObjectToRow(room)]);
     return jsonSuccess({ success: true, lastReaction: room.gameState.lastReaction, version: room.version });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function handleSubmitVerdict(payload) {
+  const roomCode = (payload.roomCode || "").toString().replace(/[\s-]/g, '').toUpperCase();
+  const playerId = payload.playerId;
+  const verdict = (payload.verdict || "").toUpperCase().trim();
+
+  if (verdict !== "MATCH" && verdict !== "MISS") {
+    return jsonError("INVALID_VERDICT", "Verdict must be 'MATCH' or 'MISS'.");
+  }
+
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) return jsonError("CONCURRENCY_TIMEOUT", "Server busy, please retry.");
+
+  try {
+    const ss = getDatabaseSpreadsheet();
+    const sheet = ss.getSheetByName("Rooms");
+    const rowIndex = findRoomRowIndex(sheet, roomCode);
+
+    if (rowIndex === -1) {
+      return jsonError("ROOM_NOT_FOUND", "Room '" + roomCode + "' does not exist.");
+    }
+
+    const row = sheet.getRange(rowIndex, 1, 1, 15).getValues()[0];
+    const room = rowToRoomObject(row);
+
+    const isHost = (playerId === room.host.id);
+    const isPartner = (room.partner && playerId === room.partner.id);
+    if (!isHost && !isPartner) {
+      return jsonError("UNAUTHORIZED", "Player not authorized in this room session.");
+    }
+
+    const roleKey = isHost ? "host" : "partner";
+    if (!room.gameState) room.gameState = {};
+    if (!room.gameState.verdicts) room.gameState.verdicts = { host: null, partner: null };
+    if (!room.gameState.playerReady) room.gameState.playerReady = { host: false, partner: false };
+
+    room.gameState.verdicts[roleKey] = verdict;
+    room.gameState.playerReady[roleKey] = true;
+
+    // Check if BOTH players have submitted their verdict
+    const hostVerdict = room.gameState.verdicts.host;
+    const partnerVerdict = room.gameState.verdicts.partner;
+
+    if (hostVerdict && partnerVerdict) {
+      const isMutualMatch = (hostVerdict === "MATCH" && partnerVerdict === "MATCH");
+      let currentScore = room.gameState.coupleScore || 0;
+
+      if (isMutualMatch) {
+        currentScore += 2;
+        room.host.score += 2;
+        if (room.partner) room.partner.score += 2;
+      } else {
+        currentScore = Math.max(0, currentScore - 1);
+        room.host.score = Math.max(0, room.host.score - 1);
+        if (room.partner) room.partner.score = Math.max(0, room.partner.score - 1);
+      }
+
+      room.gameState.coupleScore = currentScore;
+      room.gameState.lastRoundOutcome = isMutualMatch ? "MATCH" : "MISS";
+
+      const totalRounds = room.gameState.totalRounds || 5;
+      const nextRound = (room.gameState.currentRound || 1) + 1;
+
+      if (nextRound > totalRounds) {
+        room.status = "FINISHED";
+        room.gameState.completed = true;
+      } else {
+        const prompts = room.gameState.prompts || [];
+        room.gameState.currentRound = nextRound;
+        room.gameState.promptText = prompts[nextRound - 1] || ("SoulSync Prompt #" + nextRound);
+        room.gameState.phase = "ANSWERING";
+        // Clean up temporary secret text answers for next round
+        room.gameState.hostAnswer = null;
+        room.gameState.partnerAnswer = null;
+        room.gameState.answersRevealed = false;
+        room.gameState.verdicts = { host: null, partner: null };
+        room.gameState.playerReady = { host: false, partner: false };
+      }
+    }
+
+    room.lastActivity = new Date().toISOString();
+    room.version += 1;
+
+    sheet.getRange(rowIndex, 1, 1, 15).setValues([roomObjectToRow(room)]);
+    return jsonSuccess(room);
   } finally {
     lock.releaseLock();
   }
@@ -830,6 +981,30 @@ function reduceCouplesQuiz(state, move, player) {
     if (nextState.hostAnswer === nextState.partnerAnswer) {
       nextState.roundMatches = (nextState.roundMatches || 0) + 1;
     }
+  }
+
+  return { nextState: nextState };
+}
+
+/**
+ * SoulSync Move Reducer (Secret Freeform Answer Submission)
+ */
+function reduceSoulSync(state, move, player) {
+  const text = (move.text || "").trim();
+  const nextState = { ...state };
+
+  if (player === "HOST") {
+    nextState.hostAnswer = text || "Answer submitted";
+  } else {
+    nextState.partnerAnswer = text || "Answer submitted";
+  }
+
+  // If both have submitted secret answers, advance to JUDGING phase!
+  if (nextState.hostAnswer !== null && nextState.partnerAnswer !== null) {
+    nextState.answersRevealed = true;
+    nextState.phase = "JUDGING";
+    nextState.verdicts = { host: null, partner: null };
+    nextState.playerReady = { host: false, partner: false };
   }
 
   return { nextState: nextState };

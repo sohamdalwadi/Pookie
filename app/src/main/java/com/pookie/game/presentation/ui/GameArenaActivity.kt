@@ -25,6 +25,7 @@ import com.pookie.game.presentation.common.SoundManager
 import com.pookie.game.presentation.ui.views.CouplesQuizView
 import com.pookie.game.presentation.ui.views.DotsAndBoxesBoardView
 import com.pookie.game.presentation.ui.views.DualPvpHudView
+import com.pookie.game.presentation.ui.views.SoulSyncView
 import com.pookie.game.presentation.ui.views.TicTacToeBoardView
 import com.pookie.game.presentation.viewmodel.GameViewEffect
 import com.pookie.game.presentation.viewmodel.GameViewModel
@@ -39,6 +40,7 @@ class GameArenaActivity : AppCompatActivity() {
             makeMoveUseCase = ServiceLocator.makeMoveUseCase,
             sendReactionUseCase = ServiceLocator.sendReactionUseCase,
             requestRematchUseCase = ServiceLocator.requestRematchUseCase,
+            submitVerdictUseCase = ServiceLocator.submitVerdictUseCase,
             preferencesRepository = ServiceLocator.preferencesRepository,
             soundManager = soundManager
         )
@@ -72,6 +74,7 @@ class GameArenaActivity : AppCompatActivity() {
         val ticTacToeView = findViewById<TicTacToeBoardView>(R.id.ticTacToeView)
         val dotsAndBoxesView = findViewById<DotsAndBoxesBoardView>(R.id.dotsAndBoxesView)
         val couplesQuizView = findViewById<CouplesQuizView>(R.id.couplesQuizView)
+        val soulSyncView = findViewById<SoulSyncView>(R.id.soulSyncView)
 
         val btnReactionHeart = findViewById<ImageView>(R.id.btnReactionHeart)
         val btnReactionThumbsUp = findViewById<ImageView>(R.id.btnReactionThumbsUp)
@@ -184,6 +187,15 @@ class GameArenaActivity : AppCompatActivity() {
                     )
                 }
             }
+            GameType.SOUL_SYNC -> {
+                soulSyncView.visibility = View.VISIBLE
+                soulSyncView.setOnSubmitAnswerListener { text ->
+                    viewModel.submitSoulSyncAnswer(text)
+                }
+                soulSyncView.setOnSubmitVerdictListener { verdict ->
+                    viewModel.submitSoulSyncVerdict(verdict)
+                }
+            }
         }
 
         // Observe Room State
@@ -235,6 +247,20 @@ class GameArenaActivity : AppCompatActivity() {
                     myPlayerId = viewModel.myProfile.myPlayerId,
                     partnerId = currentRoom?.getOpponent(viewModel.myProfile.myPlayerId)?.id,
                     interactive = isMyTurn
+                )
+            }
+        }
+
+        // Observe SoulSync state
+        lifecycleScope.launch {
+            viewModel.soulSyncState.collect { state ->
+                val currentRoom = viewModel.roomState.value
+                val isHost = currentRoom?.host?.id == viewModel.myProfile.myPlayerId
+                soulSyncView.render(
+                    state = state,
+                    isHost = isHost,
+                    hostName = currentRoom?.host?.name ?: "Host",
+                    partnerName = currentRoom?.partner?.name ?: "Partner"
                 )
             }
         }

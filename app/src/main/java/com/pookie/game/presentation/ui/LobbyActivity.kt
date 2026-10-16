@@ -44,6 +44,7 @@ class LobbyActivity : AppCompatActivity() {
         val cardGameTicTacToe = findViewById<View>(R.id.cardGameTicTacToe)
         val cardGameDotsBoxes = findViewById<View>(R.id.cardGameDotsBoxes)
         val cardGameQuiz = findViewById<View>(R.id.cardGameQuiz)
+        val cardGameSoulSync = findViewById<View>(R.id.cardGameSoulSync)
 
         val editRoomCode = findViewById<EditText>(R.id.editRoomCode)
         val btnJoinRoom = findViewById<Button>(R.id.btnJoinRoom)
@@ -67,6 +68,9 @@ class LobbyActivity : AppCompatActivity() {
         }
         cardGameQuiz.setOnClickListener {
             viewModel.createRoom(GameType.COUPLES_QUIZ)
+        }
+        cardGameSoulSync.setOnClickListener {
+            viewModel.createRoom(GameType.SOUL_SYNC)
         }
 
         // Join Room Click
@@ -157,6 +161,7 @@ class LobbyActivity : AppCompatActivity() {
         findViewById<View>(R.id.cardGameTicTacToe).isEnabled = enabled
         findViewById<View>(R.id.cardGameDotsBoxes).isEnabled = enabled
         findViewById<View>(R.id.cardGameQuiz).isEnabled = enabled
+        findViewById<View>(R.id.cardGameSoulSync)?.isEnabled = enabled
         findViewById<Button>(R.id.btnJoinRoom).isEnabled = enabled
     }
 

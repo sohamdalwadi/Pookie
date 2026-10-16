@@ -15,11 +15,13 @@ import com.pookie.game.domain.model.GameStatus
 import com.pookie.game.domain.model.GameType
 import com.pookie.game.domain.model.ReactionType
 import com.pookie.game.domain.model.Room
+import com.pookie.game.domain.model.SoulSyncState
 import com.pookie.game.domain.repository.IPreferencesRepository
 import com.pookie.game.domain.usecase.GetGameStateUseCase
 import com.pookie.game.domain.usecase.MakeMoveUseCase
 import com.pookie.game.domain.usecase.RequestRematchUseCase
 import com.pookie.game.domain.usecase.SendReactionUseCase
+import com.pookie.game.domain.usecase.SubmitVerdictUseCase
 import com.pookie.game.presentation.common.SoundManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -44,6 +46,7 @@ class GameViewModel(
     private val makeMoveUseCase: MakeMoveUseCase,
     private val sendReactionUseCase: SendReactionUseCase,
     private val requestRematchUseCase: RequestRematchUseCase,
+    private val submitVerdictUseCase: SubmitVerdictUseCase,
     private val preferencesRepository: IPreferencesRepository,
     private val soundManager: SoundManager
 ) : ViewModel() {
@@ -64,6 +67,9 @@ class GameViewModel(
 
     private val _quizState = MutableStateFlow(CouplesQuizState())
     val quizState: StateFlow<CouplesQuizState> = _quizState.asStateFlow()
+
+    private val _soulSyncState = MutableStateFlow(SoulSyncState())
+    val soulSyncState: StateFlow<SoulSyncState> = _soulSyncState.asStateFlow()
 
     private val _viewEffect = MutableSharedFlow<GameViewEffect>()
     val viewEffect: SharedFlow<GameViewEffect> = _viewEffect.asSharedFlow()
@@ -93,6 +99,10 @@ class GameViewModel(
                     val parsed = gson.fromJson(json, CouplesQuizState::class.java)
                     if (parsed != null) _quizState.value = parsed
                 }
+                GameType.SOUL_SYNC -> {
+                    val parsed = gson.fromJson(json, SoulSyncState::class.java)
+                    if (parsed != null) _soulSyncState.value = parsed
+                }
             }
         } catch (_: Exception) {}
     }
@@ -102,8 +112,9 @@ class GameViewModel(
     fun makeMove(move: Any, piggybackReaction: ReactionType? = null) {
         val currentRoom = _roomState.value ?: return
         val movingPlayerId = if (isSoloTestMode) currentRoom.currentTurn else myProfile.myPlayerId
+        val isSimultaneous = currentRoom.gameType == GameType.COUPLES_QUIZ || currentRoom.gameType == GameType.SOUL_SYNC
 
-        if (!isSoloTestMode && currentRoom.currentTurn != myProfile.myPlayerId) {
+        if (!isSoloTestMode && !isSimultaneous && currentRoom.currentTurn != myProfile.myPlayerId) {
             viewModelScope.launch {
                 _viewEffect.emit(GameViewEffect.ShowToast("Waiting for partner's turn!"))
             }
@@ -195,10 +206,52 @@ class GameViewModel(
                 GameType.TIC_TAC_TOE -> if (isDraw) "Epic Drawbreaker Duel!" else if (isVictory) "Master of 3-in-a-row!" else "Well played duel!"
                 GameType.DOTS_AND_BOXES -> "Territory Claim: $myScore to $oppScore boxes!"
                 GameType.COUPLES_QUIZ -> _quizState.value.getHarmonyRating()
+                GameType.SOUL_SYNC -> "SoulSync Harmony: ${_soulSyncState.value.coupleScore} points scored together!"
             }
 
             viewModelScope.launch {
                 _viewEffect.emit(GameViewEffect.ShowRematchDialog(isVictory, isDraw, summary))
+            }
+        }
+    }
+
+    fun submitSoulSyncAnswer(text: String) {
+        val currentRoom = _roomState.value ?: return
+        viewModelScope.launch {
+            soundManager.playMoveSound()
+            val result = makeMoveUseCase(
+                roomCode = currentRoom.roomCode,
+                playerId = myProfile.myPlayerId,
+                move = mapOf("text" to text),
+                clientVersion = currentRoom.version
+            )
+            if (result.isSuccess) {
+                val updated = result.getOrThrow()
+                _roomState.value = updated
+                parseGameState(updated)
+                checkMatchEnd(updated)
+            } else {
+                _viewEffect.emit(GameViewEffect.ShowToast(result.exceptionOrNull()?.message ?: "Failed to submit answer"))
+            }
+        }
+    }
+
+    fun submitSoulSyncVerdict(verdict: String) {
+        val currentRoom = _roomState.value ?: return
+        viewModelScope.launch {
+            soundManager.playReactionSound()
+            val result = submitVerdictUseCase(
+                roomCode = currentRoom.roomCode,
+                playerId = myProfile.myPlayerId,
+                verdict = verdict
+            )
+            if (result.isSuccess) {
+                val updated = result.getOrThrow()
+                _roomState.value = updated
+                parseGameState(updated)
+                checkMatchEnd(updated)
+            } else {
+                _viewEffect.emit(GameViewEffect.ShowToast(result.exceptionOrNull()?.message ?: "Failed to submit verdict"))
             }
         }
     }

@@ -14,6 +14,7 @@ import com.pookie.game.domain.model.Player
 import com.pookie.game.domain.model.ReactionType
 import com.pookie.game.domain.model.RematchState
 import com.pookie.game.domain.model.Room
+import com.pookie.game.domain.model.SoulSyncState
 import com.pookie.game.domain.repository.IGameRepository
 
 class MockGameRepository : IGameRepository {
@@ -39,6 +40,7 @@ class MockGameRepository : IGameRepository {
             GameType.TIC_TAC_TOE -> gson.toJson(ticTacToeEngine.createInitialState(hostId, null))
             GameType.DOTS_AND_BOXES -> gson.toJson(dotsAndBoxesEngine.createInitialState(hostId, null, gridSize))
             GameType.COUPLES_QUIZ -> gson.toJson(couplesQuizEngine.createInitialState(hostId, null))
+            GameType.SOUL_SYNC -> gson.toJson(com.pookie.game.domain.model.SoulSyncState())
         }
 
         val room = Room(
@@ -115,6 +117,24 @@ class MockGameRepository : IGameRepository {
                 val res = couplesQuizEngine.applyMove(state, quizMove, playerId, opponentId)
                 StateDelta(gson.toJson(res.nextState), res.nextTurnPlayerId, res.isGameOver, res.winnerId, res.isDraw)
             }
+            GameType.SOUL_SYNC -> {
+                val state = gson.fromJson(room.gameStateJson, SoulSyncState::class.java) ?: SoulSyncState()
+                val text = when (move) {
+                    is Map<*, *> -> (move["text"] as? String) ?: ""
+                    else -> move.toString()
+                }
+                val isHost = playerId == room.host.id
+                val nextHostAnswer = if (isHost) text else state.hostAnswer
+                val nextPartnerAnswer = if (!isHost) text else state.partnerAnswer
+                val bothAnswered = nextHostAnswer != null && nextPartnerAnswer != null
+                val nextState = state.copy(
+                    hostAnswer = nextHostAnswer,
+                    partnerAnswer = nextPartnerAnswer,
+                    answersRevealed = bothAnswered,
+                    phase = if (bothAnswered) "JUDGING" else "ANSWERING"
+                )
+                StateDelta(gson.toJson(nextState), opponentId ?: playerId, false, null, false)
+            }
         }
 
         var newHostScore = room.host.score
@@ -150,6 +170,7 @@ class MockGameRepository : IGameRepository {
                 gson.toJson(dotsAndBoxesEngine.createInitialState(room.host.id, room.partner?.id, currentGridSize))
             }
             GameType.COUPLES_QUIZ -> gson.toJson(couplesQuizEngine.createInitialState(room.host.id, room.partner?.id))
+            GameType.SOUL_SYNC -> gson.toJson(SoulSyncState())
         }
 
         val reset = room.copy(
@@ -161,6 +182,48 @@ class MockGameRepository : IGameRepository {
         )
         rooms[roomCode] = reset
         return Result.success(reset)
+    }
+
+    override suspend fun submitVerdict(roomCode: String, playerId: String, verdict: String): Result<Room> {
+        val room = rooms[roomCode] ?: return Result.failure(Exception("Room not found"))
+        val state = try {
+            gson.fromJson(room.gameStateJson, SoulSyncState::class.java) ?: SoulSyncState()
+        } catch (_: Exception) { SoulSyncState() }
+
+        val isHost = playerId == room.host.id
+        val roleKey = if (isHost) "host" else "partner"
+        val newVerdicts = state.verdicts.toMutableMap().apply { put(roleKey, verdict) }
+        val newReady = state.playerReady.toMutableMap().apply { put(roleKey, true) }
+
+        var nextState = state.copy(verdicts = newVerdicts, playerReady = newReady)
+        var newScore = state.coupleScore
+
+        if (newVerdicts["host"] != null && newVerdicts["partner"] != null) {
+            val isMatch = newVerdicts["host"] == "MATCH" && newVerdicts["partner"] == "MATCH"
+            newScore = if (isMatch) newScore + 2 else maxOf(0, newScore - 1)
+            val nextRound = state.currentRound + 1
+            if (nextRound > state.totalRounds) {
+                nextState = nextState.copy(
+                    coupleScore = newScore,
+                    completed = true
+                )
+            } else {
+                nextState = SoulSyncState(
+                    currentRound = nextRound,
+                    totalRounds = state.totalRounds,
+                    coupleScore = newScore,
+                    lastRoundOutcome = if (isMatch) "MATCH" else "MISS"
+                )
+            }
+        }
+
+        val updated = room.copy(
+            gameStateJson = gson.toJson(nextState),
+            status = if (nextState.completed) GameStatus.GAME_OVER else GameStatus.IN_PROGRESS,
+            version = room.version + 1
+        )
+        rooms[roomCode] = updated
+        return Result.success(updated)
     }
 
     private data class StateDelta(

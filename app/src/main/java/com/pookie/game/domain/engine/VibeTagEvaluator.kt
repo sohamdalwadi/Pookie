@@ -24,6 +24,9 @@ object VibeTagEvaluator {
             GameType.DOTS_AND_BOXES -> {
                 if (isVictory) "👑 Territory Masters" else "🎮 Gamers"
             }
+            GameType.SOUL_SYNC -> {
+                if (matchScore >= 6) "Mind Readers" else if (matchScore >= 4) "Soulmates" else "Coffee Lovers"
+            }
         }
     }
 }

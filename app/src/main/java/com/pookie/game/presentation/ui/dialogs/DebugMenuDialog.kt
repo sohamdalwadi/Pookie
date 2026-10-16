@@ -25,6 +25,7 @@ object DebugMenuDialog {
             "Solo Play / Test: Tic-Tac-Toe",
             "Solo Play / Test: Dots & Boxes",
             "Solo Play / Test: Couples Quiz",
+            "Solo Play / Test: SoulSync",
             "Toggle Backend Mode: $mockStatus",
             "Load Demo Backend Key",
             "Inspect Current Config & Deployment ID",
@@ -57,16 +58,17 @@ object DebugMenuDialog {
                             .show()
                     }
                     2 -> launchSoloTestGame(activity, GameType.COUPLES_QUIZ)
-                    3 -> toggleBackendMode(activity)
-                    4 -> {
+                    3 -> launchSoloTestGame(activity, GameType.SOUL_SYNC)
+                    4 -> toggleBackendMode(activity)
+                    5 -> {
                         val demoKey = com.pookie.game.presentation.common.DebugAuthSecurity.getDemoDeploymentId()
                         ServiceLocator.preferencesRepository.saveBackendDeploymentId(demoKey)
                         ServiceLocator.isMockMode = false
                         Toast.makeText(activity, "Demo backend key applied.", Toast.LENGTH_SHORT).show()
                     }
-                    5 -> inspectConfig(activity)
-                    6 -> show401Diagnostic(activity)
-                    7 -> resetPreferences(activity)
+                    6 -> inspectConfig(activity)
+                    7 -> show401Diagnostic(activity)
+                    8 -> resetPreferences(activity)
                 }
             }
             .setNegativeButton("Close", null)
