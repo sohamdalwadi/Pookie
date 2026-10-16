@@ -18,13 +18,28 @@
  * Priority 2: Script Property 'SPREADSHEET_ID' (For standalone clasp projects).
  */
 function getDatabaseSpreadsheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let ss = null;
+  try {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  } catch (e) {
+    // In standalone or headless execution, getActiveSpreadsheet can throw NOT_FOUND
+  }
   if (ss) return ss;
 
   const scriptProperties = PropertiesService.getScriptProperties();
   const configuredSheetId = scriptProperties.getProperty("SPREADSHEET_ID");
   if (configuredSheetId && configuredSheetId.trim() !== "") {
     return SpreadsheetApp.openById(configuredSheetId.trim());
+  }
+
+  // Fallback to parent container spreadsheet
+  const defaultSheetId = "1WEDHaxXss-ehwbq6XBGbMp0FQPWUa3J7eZOcxqK1Igk";
+  if (defaultSheetId) {
+    try {
+      return SpreadsheetApp.openById(defaultSheetId);
+    } catch (err) {
+      // Not yet authorized or invalid
+    }
   }
 
   throw new Error(
