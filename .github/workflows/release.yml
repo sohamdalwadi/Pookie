@@ -1,16 +1,22 @@
-name: Pookie Automated Tag Release
+name: Pookie Production Release
 
 on:
   push:
     tags:
-      - 'v*' # Trigger on tags like v1.0.0, v0.1.0-alpha
+      - 'v*' # Trigger on version tags, e.g. v1.0.0, v1.1.0
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version tag for release (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
 
 permissions:
   contents: write
 
 jobs:
   build-and-release:
-    name: Build & Publish GitHub Release
+    name: Build & Publish Production Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -23,28 +29,45 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: gradle
 
-      - name: Compile and Package Application
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Compile and Package APK
         id: build_step
         run: |
-          if [ -f "./gradlew" ]; then
-            chmod +x gradlew
-            ./gradlew assembleRelease || ./gradlew assembleDebug
-            echo "has_apk=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_apk=false" >> $GITHUB_OUTPUT
-            echo "Creating specification and release package bundle..."
-            zip -r pookie-release-docs.zip docs app/config.template.json backend/README.md
+          ./gradlew assembleDebug --no-daemon
+          
+          mkdir -p release-apks
+          RELEASE_TAG="${{ github.ref_name }}"
+          if [ -z "$RELEASE_TAG" ] || [ "$RELEASE_TAG" = "main" ]; then
+            RELEASE_TAG="${{ github.event.inputs.version_tag }}"
           fi
+          
+          cp app/build/outputs/apk/debug/app-debug.apk release-apks/Pookie-${RELEASE_TAG}.apk
+          echo "tag_name=$RELEASE_TAG" >> $GITHUB_OUTPUT
+          ls -la release-apks/
+
+      - name: Upload Production APK as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pookie-production-apk
+          path: release-apks/
+          retention-days: 30
 
       - name: Generate Changelog and Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.build_step.outputs.tag_name }}
+          name: "Pookie Official Release ${{ steps.build_step.outputs.tag_name }}"
           generate_release_notes: true
           draft: false
           prerelease: false
           files: |
-            pookie-release-docs.zip
-            app/build/outputs/apk/**/*.apk
+            release-apks/Pookie-*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

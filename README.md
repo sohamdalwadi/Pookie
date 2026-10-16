@@ -54,6 +54,7 @@ All engineering blueprints have been mapped out prior to code implementation:
 | 🎨 **[Game Animations & Physics Specs](docs/architecture/GAME_ANIMATIONS_SPECIFICATION.md)** | Spring physics, vector mark drawing, 3D card flips, and particle confetti systems. |
 | 🎬 **[UI Screen Flow & Motion Transitions](docs/architecture/UI_TRANSITION_ARCHITECTURE.md)** | Complete 7-screen flow graph, shared element transitions, motion curves, and haptic audio specs. |
 | 📱 **[In-App Backend Setup & OTA Updates](docs/architecture/IN_APP_BACKEND_SETUP_AND_OTA.md)** | Dynamic in-app backend linking, QR server sharing, and GitHub-powered OTA APK updates. |
+| 🌿 **[Branching & Release Strategy](docs/BRANCHING_STRATEGY.md)** | Git-Flow hybrid strategy, `develop` testing builds, and `main` production release pipeline. |
 | 🤖 **[CI/CD & Tag Release Guide](docs/CI_CD_RELEASE_GUIDE.md)** | Automated GitHub Actions compile checks and tag-based release pipeline. |
 | 🗺️ **[Development Roadmap](docs/ROADMAP.md)** | Phased engineering timeline from planning through launch. |
 | 🤝 **[Contributing with Antigravity](docs/CONTRIBUTING.md)** | Guide to adding new games and features using Antigravity AI agents without Android knowledge! |
@@ -88,14 +89,25 @@ graph LR
 
 ---
 
-## 🔒 Protected Branch & Contribution Workflow
-The `main` branch of this repository is **protected**. Direct pushes to `main` are disabled to maintain code quality.
-To contribute:
+## 🌿 Branching Strategy & Development Builds
+
+Pookie uses a dual-track release and development model:
+* **`main` (Production):** Protected stable release branch. Official tagged releases (`v*`) build the production release APK.
+* **`develop` (Development):** Continuous integration branch. Every push or merge into `develop` automatically compiles the code, executes test suites, and publishes an installable **Dev Testing APK** (`Pookie-dev-latest.apk`) to GitHub Releases.
+
+### 📲 Download Latest Dev Build (For Testers)
+Testers can install the newest development build directly on Android:
+👉 **[Download Latest Dev Build (`Pookie-dev-latest.apk`)](https://github.com/sohamdalwadi/Pookie/releases/tag/dev-latest)**
+
+---
+
+## 🔒 Contribution Workflow
 1. **Fork** the repository to your GitHub account.
-2. Create a feature branch (`git checkout -b feature/my-new-game`).
-3. Use **Antigravity** and our built-in skills to build your feature effortlessly.
-4. Push your branch and open a **Pull Request** against `main`.
-5. Automated CI will validate your code before the maintainer reviews and merges it!
+2. Create a feature branch branching off **`develop`** (`git checkout -b feat/my-new-game`).
+3. Build your feature or mini-game following Clean Architecture.
+4. Push your branch and open a **Pull Request** targeting **`develop`**.
+5. Automated CI runs all unit tests and syntax checks. Once merged into `develop`, a fresh testing APK is built automatically!
+6. When a version milestone is reached, `develop` is merged into `main` and tagged for production release.
 
 ---
 

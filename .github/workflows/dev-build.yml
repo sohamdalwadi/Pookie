@@ -1,0 +1,85 @@
+name: Pookie Dev Build & Release
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-dev-apk:
+    name: Build & Publish Dev Testing APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Build Debug APK for Testing
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Prepare Dev Artifacts
+        id: prepare_apk
+        run: |
+          mkdir -p release-apks
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          
+          # Copy APK with clear versioned and rolling names
+          cp app/build/outputs/apk/debug/app-debug.apk release-apks/Pookie-dev-latest.apk
+          cp app/build/outputs/apk/debug/app-debug.apk release-apks/Pookie-dev-${SHORT_SHA}.apk
+          
+          echo "APK files prepared:"
+          ls -la release-apks/
+
+      - name: Upload Dev APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pookie-dev-apk
+          path: release-apks/
+          retention-days: 14
+
+      - name: Publish / Update Dev Pre-Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev-latest
+          name: "Pookie Dev Testing Build (${{ steps.prepare_apk.outputs.short_sha }})"
+          prerelease: true
+          make_latest: false
+          body: |
+            ### 🧪 Pookie Development Testing Build
+            
+            This build was automatically generated from the **`develop`** branch for QA and internal testing.
+            
+            * **Commit:** `${{ github.sha }}` (${{ steps.prepare_apk.outputs.short_sha }})
+            * **Triggered by:** @${{ github.actor }}
+            * **Branch:** `develop`
+            * **Build Number:** `${{ github.run_number }}`
+            
+            ---
+            
+            #### 📲 Download & Install
+            1. Download [`Pookie-dev-latest.apk`](https://github.com/sohamdalwadi/Pookie/releases/download/dev-latest/Pookie-dev-latest.apk) on your Android device.
+            2. Open the file and allow installation from browser/files.
+            3. Enter your Google Sheets Backend Deployment ID in the app setup screen to start testing!
+          files: |
+            release-apks/Pookie-dev-latest.apk
+            release-apks/Pookie-dev-*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
