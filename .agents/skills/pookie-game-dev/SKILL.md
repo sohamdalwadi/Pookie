@@ -40,8 +40,15 @@ interface PookieGameEngine<TState, TMove> {
 }
 ```
 
-### Step 3: Register in Apps Script Backend
-Update the backend route handling to validate the `GameType` enum and invoke the server-side validator before committing the updated `GameState` string to Google Sheets.
+### Step 3: Register in Apps Script Backend & CLI Sync
+1. Update the backend route handling in `backend/src/Code.js` to validate the `GameType` enum and invoke the server-side validator.
+2. **CLI-First Backend Sync**: Always push and deploy through the CLI automatically:
+   - `npx -y @google/clasp push -f`
+   - `npx -y @google/clasp deploy -d "<description>"`
+3. **Demo Key Auto-Sync**: Whenever a new deployment is created:
+   - Encrypt the key with XOR mask `0x5C`.
+   - Update `ENCRYPTED_DEMO_KEY` in `DebugAuthSecurity.kt`.
+   - Recompile (`.\gradlew assembleDebug`) and reinstall via ADB (`adb install -r`).
 
 ### Step 4: Add Client Views & Visual Feedback
 Implement the view components corresponding to the new game state machine. Ensure animations and haptic feedback provide delightful couples interactions.
