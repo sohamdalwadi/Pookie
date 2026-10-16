@@ -90,7 +90,7 @@ jobs:
         with:
           tag_name: dev-latest
           name: "Pookie Dev Testing Build v${{ steps.prepare_apk.outputs.version }} (${{ steps.prepare_apk.outputs.short_sha }})"
-          prerelease: true
+          prerelease: false
           make_latest: true
           body: |
             ### 🧪 Pookie Development Testing Build v${{ steps.prepare_apk.outputs.version }}
