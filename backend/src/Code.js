@@ -329,11 +329,11 @@ function handleCreateRoom(payload) {
   if (gameType === "TIC_TAC_TOE") {
     initialGameState = { grid: [null, null, null, null, null, null, null, null, null], moveCount: 0, winningLine: null, winner: null };
   } else if (gameType === "DOTS_AND_BOXES") {
+    const gridSize = parseInt(payload.gridSize, 10) || 3;
     initialGameState = {
-      gridSize: 3,
-      hLines: [[0,0,0],[0,0,0],[0,0,0],[0,0,0]],
-      vLines: [[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-      boxes: [[null,null,null],[null,null,null],[null,null,null]],
+      gridSize: gridSize,
+      claimedLines: {},
+      claimedBoxes: {},
       hostBoxesCount: 0,
       partnerBoxesCount: 0,
       lastMoveAwardedExtraTurn: false,
@@ -531,11 +531,11 @@ function handleResetGame(payload) {
       if (room.gameType === "TIC_TAC_TOE") {
         room.gameState = { grid: [null, null, null, null, null, null, null, null, null], moveCount: 0, winningLine: null, winner: null };
       } else if (room.gameType === "DOTS_AND_BOXES") {
+        const currentGridSize = (room.gameState && room.gameState.gridSize) ? room.gameState.gridSize : 3;
         room.gameState = {
-          gridSize: 3,
-          hLines: [[0,0,0],[0,0,0],[0,0,0],[0,0,0]],
-          vLines: [[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-          boxes: [[null,null,null],[null,null,null],[null,null,null]],
+          gridSize: currentGridSize,
+          claimedLines: {},
+          claimedBoxes: {},
           hostBoxesCount: 0,
           partnerBoxesCount: 0,
           lastMoveAwardedExtraTurn: false,
@@ -686,65 +686,97 @@ function reduceTicTacToe(state, move, player) {
 }
 
 /**
- * Dots and Boxes Move Reducer
+ * Dots and Boxes Move Reducer (Supports Dynamic Grid Size 3x3, 4x4, 5x5)
  */
 function reduceDotsAndBoxes(state, move, player) {
-  const { lineType, row, col } = move;
-  const hLines = state.hLines.map(r => [...r]);
-  const vLines = state.vLines.map(r => [...r]);
-  const boxes = state.boxes.map(r => [...r]);
-
-  if (lineType === "H") {
-    if (row < 0 || row > 3 || col < 0 || col > 2) return { error: "Horizontal edge out of bounds." };
-    if (hLines[row][col] === 1) return { error: "Edge already claimed." };
-    hLines[row][col] = 1;
-  } else if (lineType === "V") {
-    if (row < 0 || row > 2 || col < 0 || col > 3) return { error: "Vertical edge out of bounds." };
-    if (vLines[row][col] === 1) return { error: "Edge already claimed." };
-    vLines[row][col] = 1;
-  } else {
-    return { error: "Invalid lineType. Must be 'H' or 'V'." };
+  const gridSize = state.gridSize || 3;
+  let lineKey = "";
+  if (typeof move === "string") {
+    lineKey = move;
+  } else if (move && move.lineKey) {
+    lineKey = move.lineKey;
+  } else if (move && move.lineType) {
+    lineKey = `${move.lineType}_${move.row}_${move.col}`;
   }
 
-  // Check if this move completed any box
+  const parts = lineKey.split("_");
+  if (parts.length !== 3) {
+    return { error: "Invalid line key format. Expected H_r_c or V_r_c." };
+  }
+  const lineType = parts[0];
+  const r = parseInt(parts[1], 10);
+  const c = parseInt(parts[2], 10);
+
+  if (lineType === "H") {
+    if (r < 0 || r > gridSize || c < 0 || c >= gridSize) {
+      return { error: "Horizontal line coordinates out of bounds." };
+    }
+  } else if (lineType === "V") {
+    if (r < 0 || r >= gridSize || c < 0 || c > gridSize) {
+      return { error: "Vertical line coordinates out of bounds." };
+    }
+  } else {
+    return { error: "Invalid line type. Must be H or V." };
+  }
+
+  const claimedLines = Object.assign({}, state.claimedLines || {});
+  const claimedBoxes = Object.assign({}, state.claimedBoxes || {});
+
+  if (claimedLines[lineKey]) {
+    return { error: "Line already claimed." };
+  }
+  claimedLines[lineKey] = player;
+
+  // Check if any box was completed by this line move
   let newlyCapturedBoxes = 0;
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 3; c++) {
-      if (boxes[r][c] === null) {
-        const top = hLines[r][c];
-        const bottom = hLines[r+1][c];
-        const left = vLines[r][c];
-        const right = vLines[r][c+1];
-        if (top === 1 && bottom === 1 && left === 1 && right === 1) {
-          boxes[r][c] = player;
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      const boxKey = `box_${row}_${col}`;
+      if (!claimedBoxes[boxKey]) {
+        const top = `H_${row}_${col}`;
+        const bottom = `H_${row + 1}_${col}`;
+        const left = `V_${row}_${col}`;
+        const right = `V_${row}_${col + 1}`;
+
+        if (claimedLines[top] && claimedLines[bottom] && claimedLines[left] && claimedLines[right]) {
+          claimedBoxes[boxKey] = player;
           newlyCapturedBoxes++;
         }
       }
     }
   }
 
-  let hostBoxes = state.hostBoxesCount;
-  let partnerBoxes = state.partnerBoxesCount;
-  if (player === "HOST") hostBoxes += newlyCapturedBoxes;
-  else partnerBoxes += newlyCapturedBoxes;
+  let hostBoxes = 0;
+  let partnerBoxes = 0;
+  Object.keys(claimedBoxes).forEach(function(k) {
+    if (claimedBoxes[k] === "HOST") {
+      hostBoxes++;
+    } else {
+      partnerBoxes++;
+    }
+  });
 
-  // Extra Turn Rule: If 1 or 2 boxes captured, player RETAINS the turn!
-  const awardedExtraTurn = (newlyCapturedBoxes > 0);
-  const nextTurn = awardedExtraTurn ? player : ((player === "HOST") ? "PARTNER" : "HOST");
+  const totalBoxes = gridSize * gridSize;
+  const isGameOver = Object.keys(claimedBoxes).length >= totalBoxes;
+  const awardedExtraTurn = newlyCapturedBoxes > 0 && !isGameOver;
+  const nextTurn = awardedExtraTurn ? player : (player === "HOST" ? "PARTNER" : "HOST");
 
   let winner = null;
-  if (hostBoxes + partnerBoxes === 9) {
-    if (hostBoxes > partnerBoxes) winner = "HOST";
-    else if (partnerBoxes > hostBoxes) winner = "PARTNER";
-    else winner = "DRAW";
+  if (isGameOver) {
+    if (hostBoxes > partnerBoxes) {
+      winner = "HOST";
+    } else if (partnerBoxes > hostBoxes) {
+      winner = "PARTNER";
+    } else {
+      winner = "DRAW";
+    }
   }
 
   return {
     nextState: {
-      gridSize: 3,
-      hLines: hLines,
-      vLines: vLines,
-      boxes: boxes,
+      gridSize: gridSize,
+      claimedLines: claimedLines,
+      claimedBoxes: claimedBoxes,
       hostBoxesCount: hostBoxes,
       partnerBoxesCount: partnerBoxes,
       lastMoveAwardedExtraTurn: awardedExtraTurn,

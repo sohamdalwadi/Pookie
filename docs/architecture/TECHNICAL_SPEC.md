@@ -88,40 +88,33 @@ In a spreadsheet datastore, storing game matrices across multiple rows or cells 
 
 ---
 
-#### 2. Dots and Boxes (Matrix Graph)
-- **Board Sizing:** A standard 3x3 box grid consists of a 4x4 matrix of dots:
-  - **Horizontal edges:** 4 rows × 3 columns = 12 edges.
-  - **Vertical edges:** 3 rows × 4 columns = 12 edges.
-  - **Boxes:** 3 rows × 3 columns = 9 boxes.
+#### 2. Dots and Boxes (Dynamic Multi-Variant Graph)
+- **Grid Size Variants:**
+  - **Small (3x3 Boxes / 4x4 Dots):** 9 boxes, 24 edges (12 H, 12 V). Fast casual gameplay (~2-3 mins).
+  - **Medium (4x4 Boxes / 5x5 Dots):** 16 boxes, 40 edges (20 H, 20 V). Balanced strategic play (~5 mins).
+  - **High (5x5 Boxes / 6x6 Dots):** 25 boxes, 60 edges (30 H, 30 V). Deep tactical territory warfare (~10 mins).
 - **Cell Content (JSON string):**
 ```json
 {
   "gridSize": 3,
-  "hLines": [
-    [1, 0, 1],
-    [0, 1, 0],
-    [0, 0, 0],
-    [1, 1, 0]
-  ],
-  "vLines": [
-    [0, 1, 0, 0],
-    [1, 0, 1, 0],
-    [0, 0, 0, 1]
-  ],
-  "boxes": [
-    ["HOST", null, null],
-    [null, "PARTNER", null],
-    [null, null, null]
-  ],
+  "claimedLines": {
+    "H_0_0": "HOST",
+    "V_0_1": "PARTNER",
+    "H_1_0": "HOST"
+  },
+  "claimedBoxes": {
+    "box_0_0": "HOST"
+  },
   "hostBoxesCount": 1,
-  "partnerBoxesCount": 1,
-  "lastMoveAwardedExtraTurn": false,
+  "partnerBoxesCount": 0,
+  "lastMoveAwardedExtraTurn": true,
   "winner": null
 }
 ```
 - **Serialization Rationale:**
-  - Bit-matrices (`0` = unselected edge, `1` = selected edge) minimize payload size.
-  - Box capture validation is calculated server-side during `MAKE_MOVE`. If an edge completes a box, the box owner is stamped and `lastMoveAwardedExtraTurn` keeps `CurrentTurn` unchanged.
+  - Key-value mappings (`"H_r_c"` / `"V_r_c"` -> `playerId` or role) support arbitrary grid sizes (`gridSize` in `[3, 4, 5]`) with zero schema changes.
+  - Box capture validation is calculated dynamically during `MAKE_MOVE`. If an edge completes 1 or 2 boxes, the box owner is stamped and `lastMoveAwardedExtraTurn` keeps `CurrentTurn` unchanged.
+  - Total boxes needed to end the match: `gridSize * gridSize`.
 
 ---
 

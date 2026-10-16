@@ -56,17 +56,23 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
     private var isInteractive: Boolean = true
     private var onLineClickListener: ((String) -> Unit)? = null
 
-    private val gridSize = 3 // 3x3 boxes, 4x4 dots
+    private var gridSize = 3 // 3x3, 4x4, or 5x5 boxes
     private var step = 0f
     private var padding = 48f
-    private val dotRadius = 10f
+    private var dotRadius = 10f
 
     fun setState(
         lines: Map<String, String>,
         boxes: Map<String, String>,
         hostId: String,
-        interactive: Boolean = true
+        interactive: Boolean = true,
+        gridSize: Int = 3
     ) {
+        val sizeChanged = this.gridSize != gridSize && gridSize in 3..5
+        if (sizeChanged) {
+            this.gridSize = gridSize
+            configureDimensions(width)
+        }
         claimedLines = lines
         claimedBoxes = boxes
         hostPlayerId = hostId
@@ -87,7 +93,36 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        step = (w - padding * 2) / gridSize.toFloat()
+        configureDimensions(w)
+    }
+
+    private fun configureDimensions(w: Int) {
+        when (gridSize) {
+            4 -> {
+                padding = 38f
+                dotRadius = 8.5f
+                unselectedLinePaint.strokeWidth = 5f
+                hostLinePaint.strokeWidth = 8.5f
+                partnerLinePaint.strokeWidth = 8.5f
+            }
+            5 -> {
+                padding = 28f
+                dotRadius = 7f
+                unselectedLinePaint.strokeWidth = 4.5f
+                hostLinePaint.strokeWidth = 7.5f
+                partnerLinePaint.strokeWidth = 7.5f
+            }
+            else -> {
+                padding = 48f
+                dotRadius = 10f
+                unselectedLinePaint.strokeWidth = 6f
+                hostLinePaint.strokeWidth = 10f
+                partnerLinePaint.strokeWidth = 10f
+            }
+        }
+        if (w > 0) {
+            step = (w - padding * 2) / gridSize.toFloat()
+        }
     }
 
     override fun onDraw(canvas: Canvas) {

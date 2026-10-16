@@ -1,6 +1,7 @@
 package com.pookie.game.domain.engine
 
 data class DotsAndBoxesState(
+    val gridSize: Int = 3,
     val claimedLines: Map<String, String> = emptyMap(), // Key: lineId -> playerId
     val claimedBoxes: Map<String, String> = emptyMap()  // Key: "box_r_c" -> playerId
 )
@@ -8,18 +9,23 @@ data class DotsAndBoxesState(
 class DotsAndBoxesEngine : GameEngine<DotsAndBoxesState, String> {
 
     companion object {
-        const val GRID_SIZE = 3 // 3x3 boxes (4x4 dots, 9 boxes total)
+        const val DEFAULT_GRID_SIZE = 3
     }
 
     override fun createInitialState(hostId: String, partnerId: String?): DotsAndBoxesState {
-        return DotsAndBoxesState()
+        return createInitialState(hostId, partnerId, DEFAULT_GRID_SIZE)
+    }
+
+    fun createInitialState(hostId: String, partnerId: String?, gridSize: Int = DEFAULT_GRID_SIZE): DotsAndBoxesState {
+        val validSize = if (gridSize in 3..5) gridSize else DEFAULT_GRID_SIZE
+        return DotsAndBoxesState(gridSize = validSize)
     }
 
     override fun isValidMove(state: DotsAndBoxesState, move: String, playerId: String): Boolean {
-        return !state.claimedLines.containsKey(move) && isValidLineId(move)
+        return !state.claimedLines.containsKey(move) && isValidLineId(move, state.gridSize)
     }
 
-    private fun isValidLineId(lineId: String): Boolean {
+    private fun isValidLineId(lineId: String, gridSize: Int): Boolean {
         val parts = lineId.split("_")
         if (parts.size != 3) return false
         val type = parts[0]
@@ -27,8 +33,8 @@ class DotsAndBoxesEngine : GameEngine<DotsAndBoxesState, String> {
         val c = parts[2].toIntOrNull() ?: return false
 
         return when (type) {
-            "H" -> r in 0..GRID_SIZE && c in 0 until GRID_SIZE
-            "V" -> r in 0 until GRID_SIZE && c in 0..GRID_SIZE
+            "H" -> r in 0..gridSize && c in 0 until gridSize
+            "V" -> r in 0 until gridSize && c in 0..gridSize
             else -> false
         }
     }
@@ -44,10 +50,11 @@ class DotsAndBoxesEngine : GameEngine<DotsAndBoxesState, String> {
 
         val newBoxes = state.claimedBoxes.toMutableMap()
         var newlyCompletedBoxes = 0
+        val gridSize = state.gridSize
 
-        // Check each of the 9 boxes
-        for (r in 0 until GRID_SIZE) {
-            for (c in 0 until GRID_SIZE) {
+        // Check each box in the grid
+        for (r in 0 until gridSize) {
+            for (c in 0 until gridSize) {
                 val boxKey = "box_${r}_${c}"
                 if (!newBoxes.containsKey(boxKey)) {
                     val top = "H_${r}_${c}"
@@ -67,10 +74,10 @@ class DotsAndBoxesEngine : GameEngine<DotsAndBoxesState, String> {
             }
         }
 
-        val totalBoxes = GRID_SIZE * GRID_SIZE
+        val totalBoxes = gridSize * gridSize
         val isGameOver = newBoxes.size >= totalBoxes
 
-        val nextState = state.copy(claimedLines = newLines, claimedBoxes = newBoxes)
+        val nextState = state.copy(gridSize = gridSize, claimedLines = newLines, claimedBoxes = newBoxes)
 
         if (isGameOver) {
             val player1Boxes = newBoxes.values.count { it == playerId }

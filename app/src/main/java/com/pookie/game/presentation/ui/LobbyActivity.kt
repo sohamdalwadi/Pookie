@@ -63,7 +63,7 @@ class LobbyActivity : AppCompatActivity() {
             viewModel.createRoom(GameType.TIC_TAC_TOE)
         }
         cardGameDotsBoxes.setOnClickListener {
-            viewModel.createRoom(GameType.DOTS_AND_BOXES)
+            showDotsAndBoxesVariantDialog()
         }
         cardGameQuiz.setOnClickListener {
             viewModel.createRoom(GameType.COUPLES_QUIZ)
@@ -158,6 +158,27 @@ class LobbyActivity : AppCompatActivity() {
         findViewById<View>(R.id.cardGameDotsBoxes).isEnabled = enabled
         findViewById<View>(R.id.cardGameQuiz).isEnabled = enabled
         findViewById<Button>(R.id.btnJoinRoom).isEnabled = enabled
+    }
+
+    private fun showDotsAndBoxesVariantDialog() {
+        val variants = arrayOf(
+            "Small (3x3 Grid - 9 Boxes)",
+            "Medium (4x4 Grid - 16 Boxes)",
+            "High (5x5 Grid - 25 Boxes)"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Dots and Boxes - Board Size")
+            .setItems(variants) { _, which ->
+                val gridSize = when (which) {
+                    0 -> 3
+                    1 -> 4
+                    2 -> 5
+                    else -> 3
+                }
+                viewModel.createRoom(GameType.DOTS_AND_BOXES, gridSize)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun showSettingsDialog() {

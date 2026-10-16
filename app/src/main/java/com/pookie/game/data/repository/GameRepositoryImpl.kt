@@ -28,12 +28,14 @@ class GameRepositoryImpl(
     override suspend fun createRoom(
         hostId: String,
         hostName: String,
-        gameType: GameType
+        gameType: GameType,
+        gridSize: Int
     ): Result<Room> = runCatching {
         val payload = mapOf(
             "hostId" to hostId,
             "hostName" to hostName,
-            "gameType" to gameType.id
+            "gameType" to gameType.id,
+            "gridSize" to gridSize
         )
         val response = api.post("CREATE_ROOM", payload)
         if (!response.isSuccess || response.data == null) {

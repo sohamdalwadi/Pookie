@@ -6,7 +6,7 @@ import com.pookie.game.domain.model.Room
 
 interface IGameRepository {
     suspend fun checkHealth(): Result<Boolean>
-    suspend fun createRoom(hostId: String, hostName: String, gameType: GameType): Result<Room>
+    suspend fun createRoom(hostId: String, hostName: String, gameType: GameType, gridSize: Int = 3): Result<Room>
     suspend fun joinRoom(roomCode: String, partnerId: String, partnerName: String): Result<Room>
     suspend fun getGameState(roomCode: String, knownVersion: Int): Result<Room?>
     suspend fun makeMove(

@@ -37,7 +37,25 @@ object DebugMenuDialog {
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> launchSoloTestGame(activity, GameType.TIC_TAC_TOE)
-                    1 -> launchSoloTestGame(activity, GameType.DOTS_AND_BOXES)
+                    1 -> {
+                        val variants = arrayOf(
+                            "Small (3x3 Grid - 9 Boxes)",
+                            "Medium (4x4 Grid - 16 Boxes)",
+                            "High (5x5 Grid - 25 Boxes)"
+                        )
+                        AlertDialog.Builder(activity)
+                            .setTitle("Solo Test: Dots and Boxes Size")
+                            .setItems(variants) { _, vWhich ->
+                                val gridSize = when (vWhich) {
+                                    0 -> 3
+                                    1 -> 4
+                                    2 -> 5
+                                    else -> 3
+                                }
+                                launchSoloTestGame(activity, GameType.DOTS_AND_BOXES, gridSize)
+                            }
+                            .show()
+                    }
                     2 -> launchSoloTestGame(activity, GameType.COUPLES_QUIZ)
                     3 -> toggleBackendMode(activity)
                     4 -> {
@@ -55,7 +73,7 @@ object DebugMenuDialog {
             .show()
     }
 
-    private fun launchSoloTestGame(activity: Activity, gameType: GameType) {
+    private fun launchSoloTestGame(activity: Activity, gameType: GameType, gridSize: Int = 3) {
         CoroutineScope(Dispatchers.Main).launch {
             ServiceLocator.isMockMode = true
             Toast.makeText(activity, "Starting Solo Test: ${gameType.displayName}...", Toast.LENGTH_SHORT).show()
@@ -63,7 +81,7 @@ object DebugMenuDialog {
             val hostId = "P_HostTest"
             val partnerId = "P_PartnerTest"
 
-            val createResult = ServiceLocator.mockGameRepository.createRoom(hostId, "Host (You)", gameType)
+            val createResult = ServiceLocator.mockGameRepository.createRoom(hostId, "Host (You)", gameType, gridSize)
             if (createResult.isSuccess) {
                 val created = createResult.getOrThrow()
                 val joinResult = ServiceLocator.mockGameRepository.joinRoom(created.roomCode, partnerId, "Partner (Simulated)")

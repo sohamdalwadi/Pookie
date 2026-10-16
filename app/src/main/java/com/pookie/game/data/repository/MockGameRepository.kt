@@ -27,11 +27,11 @@ class MockGameRepository : IGameRepository {
 
     override suspend fun checkHealth(): Result<Boolean> = Result.success(true)
 
-    override suspend fun createRoom(hostId: String, hostName: String, gameType: GameType): Result<Room> {
+    override suspend fun createRoom(hostId: String, hostName: String, gameType: GameType, gridSize: Int): Result<Room> {
         val code = "TEST" + (1000..9999).random()
         val initialGameStateJson = when (gameType) {
             GameType.TIC_TAC_TOE -> gson.toJson(ticTacToeEngine.createInitialState(hostId, null))
-            GameType.DOTS_AND_BOXES -> gson.toJson(dotsAndBoxesEngine.createInitialState(hostId, null))
+            GameType.DOTS_AND_BOXES -> gson.toJson(dotsAndBoxesEngine.createInitialState(hostId, null, gridSize))
             GameType.COUPLES_QUIZ -> gson.toJson(couplesQuizEngine.createInitialState(hostId, null))
         }
 
@@ -132,7 +132,12 @@ class MockGameRepository : IGameRepository {
         val room = rooms[roomCode] ?: return Result.failure(Exception("Room not found"))
         val initialGameStateJson = when (room.gameType) {
             GameType.TIC_TAC_TOE -> gson.toJson(ticTacToeEngine.createInitialState(room.host.id, room.partner?.id))
-            GameType.DOTS_AND_BOXES -> gson.toJson(dotsAndBoxesEngine.createInitialState(room.host.id, room.partner?.id))
+            GameType.DOTS_AND_BOXES -> {
+                val currentGridSize = try {
+                    gson.fromJson(room.gameStateJson, DotsAndBoxesState::class.java)?.gridSize ?: 3
+                } catch (_: Exception) { 3 }
+                gson.toJson(dotsAndBoxesEngine.createInitialState(room.host.id, room.partner?.id, currentGridSize))
+            }
             GameType.COUPLES_QUIZ -> gson.toJson(couplesQuizEngine.createInitialState(room.host.id, room.partner?.id))
         }
 

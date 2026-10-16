@@ -31,13 +31,14 @@ class LobbyViewModel(
 
     val profile: CoupleProfile get() = preferencesRepository.getCoupleProfile()
 
-    fun createRoom(gameType: GameType) {
+    fun createRoom(gameType: GameType, gridSize: Int = 3) {
         viewModelScope.launch {
             _roomActionState.value = Resource.Loading
             val result = createRoomUseCase(
                 hostId = profile.myPlayerId,
                 hostName = profile.myNickname.ifBlank { "Host" },
-                gameType = gameType
+                gameType = gameType,
+                gridSize = gridSize
             )
             if (result.isSuccess) {
                 _roomActionState.value = Resource.Success(result.getOrThrow())

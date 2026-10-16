@@ -24,10 +24,12 @@ Creates a new room session, generates a unique 6-character room code, and regist
   "payload": {
     "hostName": "Soham",
     "hostId": "c3f912e6-8c43-4b61-9c12-32f281e0129a",
-    "gameType": "TIC_TAC_TOE"
+    "gameType": "DOTS_AND_BOXES",
+    "gridSize": 3
   }
 }
 ```
+> Note: `gridSize` is optional and applies to `DOTS_AND_BOXES`: `3` (Small - 3x3), `4` (Medium - 4x4), or `5` (High - 5x5). Defaults to `3`.
 - **Response Body:**
 ```json
 {

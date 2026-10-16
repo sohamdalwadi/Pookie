@@ -167,7 +167,8 @@ class GameArenaActivity : AppCompatActivity() {
                     lines = state.claimedLines,
                     boxes = state.claimedBoxes,
                     hostId = currentRoom?.host?.id ?: "",
-                    interactive = isMyTurn
+                    interactive = isMyTurn,
+                    gridSize = state.gridSize
                 )
             }
         }
