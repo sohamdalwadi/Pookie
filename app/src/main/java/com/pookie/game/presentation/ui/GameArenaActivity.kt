@@ -62,10 +62,10 @@ class GameArenaActivity : AppCompatActivity() {
         }
 
         val initialRoom = gson.fromJson(roomJson, Room::class.java)
-        val isSolo = intent.getBooleanExtra("IS_SOLO_TEST_MODE", false) || initialRoom.partner == null
+        val isSolo = intent.getBooleanExtra("IS_SOLO_TEST_MODE", false)
         viewModel.isSoloTestMode = isSolo
 
-        val effectiveRoom = if (initialRoom.partner == null) {
+        val effectiveRoom = if (isSolo && initialRoom.partner == null) {
             val botGender = if (initialRoom.host.gender == com.pookie.game.domain.model.Gender.MALE)
                 com.pookie.game.domain.model.Gender.FEMALE else com.pookie.game.domain.model.Gender.MALE
             initialRoom.copy(
@@ -112,6 +112,24 @@ class GameArenaActivity : AppCompatActivity() {
         val dotsAndBoxesView = findViewById<DotsAndBoxesBoardView>(R.id.dotsAndBoxesView)
         val couplesQuizView = findViewById<CouplesQuizView>(R.id.couplesQuizView)
         val soulSyncView = findViewById<SoulSyncView>(R.id.soulSyncView)
+
+        val layoutWaitingForPartner = findViewById<View>(R.id.layoutWaitingForPartner)
+        val textWaitingRoomCode = findViewById<TextView>(R.id.textWaitingRoomCode)
+        val btnWaitingCopyCode = findViewById<Button>(R.id.btnWaitingCopyCode)
+        val btnWaitingShowQr = findViewById<Button>(R.id.btnWaitingShowQr)
+
+        textWaitingRoomCode.text = initialRoom.roomCode
+
+        btnWaitingCopyCode.setOnClickListener {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("Room Code", initialRoom.roomCode)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, R.string.code_copied, Toast.LENGTH_SHORT).show()
+        }
+
+        btnWaitingShowQr.setOnClickListener {
+            showQrDialog(initialRoom.roomCode)
+        }
 
         val btnReactionHeart = findViewById<ImageView>(R.id.btnReactionHeart)
         val btnReactionThumbsUp = findViewById<ImageView>(R.id.btnReactionThumbsUp)
@@ -235,11 +253,30 @@ class GameArenaActivity : AppCompatActivity() {
             }
         }
 
+        var previousPartner: com.pookie.game.domain.model.Player? = initialRoom.partner
+
         // Observe Room State
         lifecycleScope.launch {
             viewModel.roomState.collect { room ->
                 if (room != null) {
                     textArenaRoomCode.text = room.roomCode
+                    textWaitingRoomCode.text = room.roomCode
+
+                    val isWaiting = room.partner == null
+                    layoutWaitingForPartner.visibility = if (isWaiting) View.VISIBLE else View.GONE
+
+                    if (previousPartner == null && room.partner != null) {
+                        soundManager.playReactionSound()
+                        Toast.makeText(this@GameArenaActivity, "${room.partner.name} joined! Game starting!", Toast.LENGTH_SHORT).show()
+                    }
+                    previousPartner = room.partner
+
+                    reactionButtons.forEach { btn ->
+                        btn.isEnabled = !isWaiting && !isReactionCooldown
+                        btn.alpha = if (!isWaiting && !isReactionCooldown) 1.0f else 0.35f
+                    }
+                    btnArenaRematch.isEnabled = !isWaiting
+
                     val myId = if (viewModel.isSoloTestMode) room.host.id else viewModel.myProfile.myPlayerId
                     dualPvpHud.updatePlayers(
                         player1 = room.host,
@@ -247,33 +284,46 @@ class GameArenaActivity : AppCompatActivity() {
                         currentTurnPlayerId = room.currentTurn,
                         myPlayerId = myId
                     )
-                    val isMyTurn = room.isMyTurn(myId)
-                    when (room.gameType) {
-                        GameType.TIC_TAC_TOE -> {
-                            val state = viewModel.ticTacToeState.value
-                            ticTacToeView.setBoard(state.board, state.winningLine, interactive = isMyTurn)
+
+                    if (!isWaiting) {
+                        val isMyTurn = room.isMyTurn(myId)
+                        when (room.gameType) {
+                            GameType.TIC_TAC_TOE -> {
+                                ticTacToeView.visibility = View.VISIBLE
+                                val state = viewModel.ticTacToeState.value
+                                ticTacToeView.setBoard(state.board, state.winningLine, interactive = isMyTurn)
+                            }
+                            GameType.DOTS_AND_BOXES -> {
+                                dotsAndBoxesView.visibility = View.VISIBLE
+                                val state = viewModel.dotsAndBoxesState.value
+                                dotsAndBoxesView.setState(
+                                    lines = state.claimedLines,
+                                    boxes = state.claimedBoxes,
+                                    boxNumbers = state.boxNumbers,
+                                    hostId = room.host.id,
+                                    interactive = isMyTurn,
+                                    gridSize = state.gridSize
+                                )
+                            }
+                            GameType.COUPLES_QUIZ -> {
+                                couplesQuizView.visibility = View.VISIBLE
+                                val state = viewModel.quizState.value
+                                couplesQuizView.render(
+                                    quizState = state,
+                                    myPlayerId = myId,
+                                    partnerId = room.getOpponent(myId)?.id,
+                                    interactive = isMyTurn
+                                )
+                            }
+                            GameType.SOUL_SYNC -> {
+                                soulSyncView.visibility = View.VISIBLE
+                            }
                         }
-                        GameType.DOTS_AND_BOXES -> {
-                            val state = viewModel.dotsAndBoxesState.value
-                            dotsAndBoxesView.setState(
-                                lines = state.claimedLines,
-                                boxes = state.claimedBoxes,
-                                boxNumbers = state.boxNumbers,
-                                hostId = room.host.id,
-                                interactive = isMyTurn,
-                                gridSize = state.gridSize
-                            )
-                        }
-                        GameType.COUPLES_QUIZ -> {
-                            val state = viewModel.quizState.value
-                            couplesQuizView.render(
-                                quizState = state,
-                                myPlayerId = myId,
-                                partnerId = room.getOpponent(myId)?.id,
-                                interactive = isMyTurn
-                            )
-                        }
-                        GameType.SOUL_SYNC -> {}
+                    } else {
+                        ticTacToeView.visibility = View.GONE
+                        dotsAndBoxesView.visibility = View.GONE
+                        couplesQuizView.visibility = View.GONE
+                        soulSyncView.visibility = View.GONE
                     }
                 }
             }
@@ -282,9 +332,10 @@ class GameArenaActivity : AppCompatActivity() {
         // Observe TicTacToe state
         lifecycleScope.launch {
             viewModel.ticTacToeState.collect { state ->
-                val currentRoom = viewModel.roomState.value
-                val myId = if (viewModel.isSoloTestMode) currentRoom?.host?.id else viewModel.myProfile.myPlayerId
-                val isMyTurn = currentRoom?.isMyTurn(myId ?: "") == true
+                val currentRoom = viewModel.roomState.value ?: return@collect
+                if (currentRoom.partner == null) return@collect
+                val myId = if (viewModel.isSoloTestMode) currentRoom.host.id else viewModel.myProfile.myPlayerId
+                val isMyTurn = currentRoom.isMyTurn(myId)
                 ticTacToeView.setBoard(state.board, state.winningLine, interactive = isMyTurn)
             }
         }
@@ -292,14 +343,15 @@ class GameArenaActivity : AppCompatActivity() {
         // Observe Dots & Boxes state
         lifecycleScope.launch {
             viewModel.dotsAndBoxesState.collect { state ->
-                val currentRoom = viewModel.roomState.value
-                val myId = if (viewModel.isSoloTestMode) currentRoom?.host?.id else viewModel.myProfile.myPlayerId
-                val isMyTurn = currentRoom?.isMyTurn(myId ?: "") == true
+                val currentRoom = viewModel.roomState.value ?: return@collect
+                if (currentRoom.partner == null) return@collect
+                val myId = if (viewModel.isSoloTestMode) currentRoom.host.id else viewModel.myProfile.myPlayerId
+                val isMyTurn = currentRoom.isMyTurn(myId)
                 dotsAndBoxesView.setState(
                     lines = state.claimedLines,
                     boxes = state.claimedBoxes,
                     boxNumbers = state.boxNumbers,
-                    hostId = currentRoom?.host?.id ?: "",
+                    hostId = currentRoom.host.id,
                     interactive = isMyTurn,
                     gridSize = state.gridSize
                 )
@@ -309,13 +361,14 @@ class GameArenaActivity : AppCompatActivity() {
         // Observe Quiz state
         lifecycleScope.launch {
             viewModel.quizState.collect { state ->
-                val currentRoom = viewModel.roomState.value
-                val myId = if (viewModel.isSoloTestMode) currentRoom?.host?.id else viewModel.myProfile.myPlayerId
-                val isMyTurn = currentRoom?.isMyTurn(myId ?: "") == true
+                val currentRoom = viewModel.roomState.value ?: return@collect
+                if (currentRoom.partner == null) return@collect
+                val myId = if (viewModel.isSoloTestMode) currentRoom.host.id else viewModel.myProfile.myPlayerId
+                val isMyTurn = currentRoom.isMyTurn(myId)
                 couplesQuizView.render(
                     quizState = state,
-                    myPlayerId = myId ?: viewModel.myProfile.myPlayerId,
-                    partnerId = currentRoom?.getOpponent(myId ?: "")?.id,
+                    myPlayerId = myId,
+                    partnerId = currentRoom.getOpponent(myId)?.id,
                     interactive = isMyTurn
                 )
             }
@@ -324,13 +377,14 @@ class GameArenaActivity : AppCompatActivity() {
         // Observe SoulSync state
         lifecycleScope.launch {
             viewModel.soulSyncState.collect { state ->
-                val currentRoom = viewModel.roomState.value
-                val isHost = if (viewModel.isSoloTestMode) true else (currentRoom?.host?.id == viewModel.myProfile.myPlayerId)
+                val currentRoom = viewModel.roomState.value ?: return@collect
+                if (currentRoom.partner == null) return@collect
+                val isHost = if (viewModel.isSoloTestMode) true else (currentRoom.host.id == viewModel.myProfile.myPlayerId)
                 soulSyncView.render(
                     state = state,
                     isHost = isHost,
-                    hostName = currentRoom?.host?.name ?: "Host",
-                    partnerName = currentRoom?.partner?.name ?: "Partner"
+                    hostName = currentRoom.host.name,
+                    partnerName = currentRoom.partner?.name ?: "Partner"
                 )
             }
         }

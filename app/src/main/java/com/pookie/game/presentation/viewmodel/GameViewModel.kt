@@ -467,7 +467,7 @@ class GameViewModel(
                         _viewEffect.emit(GameViewEffect.ShowConnectionLostDialog(isDisconnected = false))
                     }
                     val updated = result.getOrThrow()
-                    if (updated != null && updated.version > version) {
+                    if (updated != null && (updated.version > version || (_roomState.value?.partner == null && updated.partner != null))) {
                         _roomState.value = updated
                         parseGameState(updated)
                         checkMatchEnd(updated)

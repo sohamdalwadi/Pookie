@@ -83,7 +83,7 @@ class DualPvpHudView @JvmOverloads constructor(
         }
 
         // Turn Timer Border & Countdown (10 seconds)
-        val isPlayer1Turn = currentTurnPlayerId == player1.id
+        val isPlayer1Turn = player2 != null && currentTurnPlayerId == player1.id
         val isPlayer2Turn = player2 != null && currentTurnPlayerId == player2.id
 
         if (currentTurnPlayerId != lastActiveTurnPlayerId) {

@@ -125,6 +125,84 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone" />
+
+        <!-- Waiting For Partner Overlay -->
+        <LinearLayout
+            android:id="@+id/layoutWaitingForPartner"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:visibility="gone">
+
+            <ProgressBar
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:indeterminateTint="@color/pink_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Waiting for partner to join..."
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Share this Room Code with your partner"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <!-- Room Code Card -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_rounded_input"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="12dp">
+
+                <TextView
+                    android:id="@+id/textWaitingRoomCode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/pink_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnWaitingCopyCode"
+                    style="@style/Widget.Pookie.Button.Primary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:text="Copy Code"
+                    android:paddingHorizontal="18dp" />
+
+                <Button
+                    android:id="@+id/btnWaitingShowQr"
+                    style="@style/Widget.Pookie.Button.Secondary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="12dp"
+                    android:text="Show QR"
+                    android:paddingHorizontal="18dp" />
+            </LinearLayout>
+        </LinearLayout>
     </FrameLayout>
 
     <!-- New Interactive Bottom Bar with Middle Big Round Nudge Button -->

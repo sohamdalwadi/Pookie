@@ -279,7 +279,7 @@ function roomObjectToRow(room) {
 function handleGetState(params) {
   const roomCode = params.roomCode;
   const playerId = params.playerId;
-  const clientVersion = parseInt(params.v, 10);
+  const clientVersion = parseInt(params.v || params.version, 10);
 
   if (!roomCode) return jsonError("MISSING_PARAM", "Parameter 'roomCode' is required.");
 

@@ -71,7 +71,8 @@ class GameRepositoryImpl(
     override suspend fun getGameState(roomCode: String, knownVersion: Int): Result<Room?> = runCatching {
         val params = mapOf(
             "roomCode" to roomCode,
-            "version" to knownVersion.toString()
+            "version" to knownVersion.toString(),
+            "v" to knownVersion.toString()
         )
         val response = api.get("GET_STATE", params)
         if (!response.isSuccess) {
@@ -79,6 +80,12 @@ class GameRepositoryImpl(
         }
         if (response.data == null || response.data.isJsonNull) {
             return@runCatching null
+        }
+        if (response.data.isJsonObject) {
+            val jsonObj = response.data.asJsonObject
+            if (jsonObj.has("isUpdated") && !jsonObj.get("isUpdated").asBoolean) {
+                return@runCatching null
+            }
         }
         val dto = gson.fromJson(response.data, RoomDto::class.java)
         mapDtoToRoom(dto)

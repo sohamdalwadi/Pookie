@@ -53,13 +53,8 @@ class LobbyActivity : AppCompatActivity() {
         val progressLobby = findViewById<ProgressBar>(R.id.progressLobby)
 
         // Setup couple header
-        val profile = viewModel.profile
-        textCoupleGreetings.text = if (profile.partnerNickname.isNotBlank()) {
-            "${profile.myNickname} & ${profile.partnerNickname}"
-        } else {
-            "Welcome, ${profile.myNickname}!"
-        }
-        textCoupleVibe.text = profile.vibeTag
+        updateHeaderGreeting()
+        textCoupleVibe.text = viewModel.profile.vibeTag
 
         // Game Card Clicks
         cardGameTicTacToe.setOnClickListener {
@@ -244,4 +239,18 @@ class LobbyActivity : AppCompatActivity() {
             .setNegativeButton("Close", null)
             .show()
     }
+
+    private fun updateHeaderGreeting() {
+        val profile = viewModel.profile
+        val textCoupleGreetings = findViewById<TextView>(R.id.textCoupleGreetings)
+        val textCoupleVibe = findViewById<TextView>(R.id.textCoupleVibe)
+        textCoupleGreetings?.text = "Welcome, ${profile.myNickname}!"
+        textCoupleVibe?.text = profile.vibeTag
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateHeaderGreeting()
+    }
 }
+
