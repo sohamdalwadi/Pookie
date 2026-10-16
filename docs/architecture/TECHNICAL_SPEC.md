@@ -808,5 +808,8 @@ To ensure zero quota exhaustion and protect mobile battery, the Anti Gravity cli
   - If missing (e.g. clean CI checkout), it defaults to empty string `""` with zero plain-text fallback strings in the repository or compiled `.class` files.
 - **Runtime Decryption (`DebugAuthSecurity`):**
   - When "Load Demo Backend Key" is tapped in the debug menu, `DebugAuthSecurity.getDemoDeploymentId()` decrypts the hex string in-memory on demand.
+- **Mandatory Pre-Commit Secret Verification:**
+  - AI agents and developers must never commit plaintext keys, tokens, or deployment IDs (`AKfycb...`).
+  - Prior to every `git commit`, `git diff --cached` must be inspected to ensure zero secret exposure. All keys are strictly confined to `local.properties`.
 
 

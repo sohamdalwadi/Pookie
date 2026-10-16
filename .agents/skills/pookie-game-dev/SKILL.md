@@ -68,3 +68,4 @@ Implement the view components corresponding to the new game state machine. Ensur
 - [ ] Handles rapid double-clicks gracefully (optimistic concurrency version check).
 - [ ] Disconnection or timeout is cleanly handled.
 - [ ] Game over screen triggers rematch negotiation properly.
+- [ ] **MANDATORY PRE-COMMIT KEY AUDIT:** Run `git diff --cached` to verify NO secret keys, API tokens, or `AKfycb...` deployment IDs are staged before committing. All keys must remain exclusively in `local.properties`.
