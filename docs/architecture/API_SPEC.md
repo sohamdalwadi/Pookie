@@ -168,7 +168,6 @@ Sync pulse and heartbeat. Enables client to check if the opponent has moved.
 ## 4. Action: `MAKE_MOVE`
 Submits a turn from the active player.
 
-- **Method:** `POST`
 - **Request Body (Tic-Tac-Toe):**
 ```json
 {
@@ -183,6 +182,8 @@ Submits a turn from the active player.
   }
 }
 ```
+> Note: For automatic turn timeout passing (when player's 10s turn timer runs out), the client submits `move: { "isTimeout": true }`. The backend advances the turn advantage to the partner without mutating board state.
+
 - **Response Body:**
 ```json
 {
@@ -239,7 +240,9 @@ Sends a quick reaction or nudge buzzer to the partner during an active game sess
 }
 ```
 > Supported `reaction` values: `HEART`, `THUMBS_UP`, `THUMBS_DOWN`, `LIGHTNING`, `NUDGE`.
-> `NUDGE` triggers strong tactile haptic feedback on the opponent's device.
+> - **Display:** Floats directly below the recipient player's avatar for 5.0 seconds.
+> - **Cooldown:** Reaction buttons are grayed out with a 5.0-second cooldown rate-limiter.
+> - **Haptics:** `NUDGE` delivers strong tactile buzzer feedback on the opponent device (and instant local feedback on sender tap).
 
 ---
 

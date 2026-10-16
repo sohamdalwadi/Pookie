@@ -36,13 +36,6 @@
                     android:background="@drawable/bg_reaction_bubble"
                     android:padding="10dp"
                     android:src="@drawable/ic_avatar_male" />
-
-                <ImageView
-                    android:id="@+id/reaction1Icon"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="top|end"
-                    android:visibility="gone" />
             </FrameLayout>
 
             <!-- Reaction displayed below profile -->
@@ -139,13 +132,6 @@
                     android:background="@drawable/bg_reaction_bubble"
                     android:padding="10dp"
                     android:src="@drawable/ic_avatar_female" />
-
-                <ImageView
-                    android:id="@+id/reaction2Icon"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="top|start"
-                    android:visibility="gone" />
             </FrameLayout>
 
             <!-- Reaction displayed below profile -->

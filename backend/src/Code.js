@@ -459,6 +459,15 @@ function handleMakeMove(payload) {
       return jsonError("NOT_YOUR_TURN", "It is not your turn to move.");
     }
 
+    // Turn Timeout Pass: Player ran out of time, switch turn advantage to partner
+    if (move.isTimeout === true) {
+      room.currentTurn = (playerRole === "HOST" ? "PARTNER" : "HOST");
+      room.lastActivity = new Date().toISOString();
+      room.version += 1;
+      sheet.getRange(rowIndex, 1, 1, 15).setValues([roomObjectToRow(room)]);
+      return jsonSuccess(room);
+    }
+
     // Pure Game Reducer Execution
     if (room.gameType === "TIC_TAC_TOE") {
       const result = reduceTicTacToe(room.gameState, move, playerRole);

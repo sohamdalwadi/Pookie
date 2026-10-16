@@ -36,6 +36,7 @@ sealed class GameViewEffect {
     data class ShowToast(val message: String) : GameViewEffect()
     data class PlayReactionAnimation(val isPlayer1: Boolean, val reactionType: ReactionType) : GameViewEffect()
     data class ShowRematchDialog(val isVictory: Boolean, val isDraw: Boolean, val summary: String) : GameViewEffect()
+    data class ShowConnectionLostDialog(val isDisconnected: Boolean, val message: String = "Partner lost connection. Reconnecting...") : GameViewEffect()
 }
 
 class GameViewModel(
@@ -202,6 +203,31 @@ class GameViewModel(
         }
     }
 
+    fun passTurnOnTimeout() {
+        val currentRoom = _roomState.value ?: return
+        if (currentRoom.status != GameStatus.IN_PROGRESS) return
+        if (!isSoloTestMode && currentRoom.currentTurn != myProfile.myPlayerId) return
+
+        viewModelScope.launch {
+            _viewEffect.emit(GameViewEffect.ShowToast("Turn timed out! Turn passed to partner."))
+            val result = makeMoveUseCase(
+                roomCode = currentRoom.roomCode,
+                playerId = if (isSoloTestMode) currentRoom.currentTurn else myProfile.myPlayerId,
+                move = mapOf("isTimeout" to true),
+                clientVersion = currentRoom.version
+            )
+            if (result.isSuccess) {
+                val updated = result.getOrThrow()
+                _roomState.value = updated
+                parseGameState(updated)
+                checkMatchEnd(updated)
+            }
+        }
+    }
+
+    private var consecutivePollFailures = 0
+    private var isDisconnectDialogVisible = false
+
     private fun startPolling(roomCode: String) {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
@@ -218,11 +244,23 @@ class GameViewModel(
                 val version = _roomState.value?.version ?: 0
                 val result = getGameStateUseCase(roomCode, version)
                 if (result.isSuccess) {
+                    consecutivePollFailures = 0
+                    if (isDisconnectDialogVisible) {
+                        isDisconnectDialogVisible = false
+                        _viewEffect.emit(GameViewEffect.ShowConnectionLostDialog(isDisconnected = false))
+                    }
                     val updated = result.getOrThrow()
                     if (updated != null && updated.version > version) {
                         _roomState.value = updated
                         parseGameState(updated)
                         checkMatchEnd(updated)
+                    }
+                } else {
+                    consecutivePollFailures++
+                    // After 3 consecutive polling drops (~6-9s), alert that connection is lost
+                    if (consecutivePollFailures >= 3 && !isDisconnectDialogVisible && _roomState.value?.status == GameStatus.IN_PROGRESS) {
+                        isDisconnectDialogVisible = true
+                        _viewEffect.emit(GameViewEffect.ShowConnectionLostDialog(isDisconnected = true))
                     }
                 }
             }

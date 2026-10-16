@@ -25,18 +25,17 @@ class DualPvpHudView @JvmOverloads constructor(
     private val textPlayer1Score: TextView
     private val avatar1TimerView: CircularTurnTimerView
     private val avatar1Icon: ImageView
-    private val reaction1Icon: ImageView
     private val reaction1BelowIcon: ImageView
 
     private val textPlayer2Name: TextView
     private val textPlayer2Score: TextView
     private val avatar2TimerView: CircularTurnTimerView
     private val avatar2Icon: ImageView
-    private val reaction2Icon: ImageView
     private val reaction2BelowIcon: ImageView
 
     private val textTurnStatus: TextView
     private var lastActiveTurnPlayerId: String? = null
+    var onTurnTimeout: (() -> Unit)? = null
 
     init {
         val root = LayoutInflater.from(context).inflate(R.layout.view_dual_pvp_hud, this, true)
@@ -45,14 +44,12 @@ class DualPvpHudView @JvmOverloads constructor(
         textPlayer1Score = root.findViewById(R.id.textPlayer1Score)
         avatar1TimerView = root.findViewById(R.id.avatar1TimerView)
         avatar1Icon = root.findViewById(R.id.avatar1Icon)
-        reaction1Icon = root.findViewById(R.id.reaction1Icon)
         reaction1BelowIcon = root.findViewById(R.id.reaction1BelowIcon)
 
         textPlayer2Name = root.findViewById(R.id.textPlayer2Name)
         textPlayer2Score = root.findViewById(R.id.textPlayer2Score)
         avatar2TimerView = root.findViewById(R.id.avatar2TimerView)
         avatar2Icon = root.findViewById(R.id.avatar2Icon)
-        reaction2Icon = root.findViewById(R.id.reaction2Icon)
         reaction2BelowIcon = root.findViewById(R.id.reaction2BelowIcon)
 
         textTurnStatus = root.findViewById(R.id.textTurnStatus)
@@ -85,17 +82,21 @@ class DualPvpHudView @JvmOverloads constructor(
             avatar2Icon.setImageResource(R.drawable.ic_avatar_female)
         }
 
-        // Turn Timer Border & Countdown
+        // Turn Timer Border & Countdown (10 seconds)
         val isPlayer1Turn = currentTurnPlayerId == player1.id
         val isPlayer2Turn = player2 != null && currentTurnPlayerId == player2.id
 
         if (currentTurnPlayerId != lastActiveTurnPlayerId) {
             lastActiveTurnPlayerId = currentTurnPlayerId
             if (isPlayer1Turn) {
-                avatar1TimerView.startCountdown(30000L)
+                avatar1TimerView.startCountdown(10000L) {
+                    onTurnTimeout?.invoke()
+                }
                 avatar2TimerView.setActive(false)
             } else if (isPlayer2Turn) {
-                avatar2TimerView.startCountdown(30000L)
+                avatar2TimerView.startCountdown(10000L) {
+                    onTurnTimeout?.invoke()
+                }
                 avatar1TimerView.setActive(false)
             } else {
                 avatar1TimerView.setActive(false)
@@ -114,7 +115,6 @@ class DualPvpHudView @JvmOverloads constructor(
     }
 
     fun triggerReaction(isPlayer1: Boolean, reactionType: ReactionType) {
-        val targetFloatingIcon = if (isPlayer1) reaction1Icon else reaction2Icon
         val targetBelowIcon = if (isPlayer1) reaction1BelowIcon else reaction2BelowIcon
 
         val iconRes = when (reactionType) {
@@ -126,38 +126,34 @@ class DualPvpHudView @JvmOverloads constructor(
             ReactionType.NUDGE -> R.drawable.ic_nudge
         }
 
-        // 1. Floating animation
-        targetFloatingIcon.setImageResource(iconRes)
-        targetFloatingIcon.visibility = View.VISIBLE
-        targetFloatingIcon.alpha = 1f
-        targetFloatingIcon.scaleX = 0f
-        targetFloatingIcon.scaleY = 0f
-
-        val scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 0f, 1.4f, 1.0f)
-        val scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 0f, 1.4f, 1.0f)
-        val alpha = PropertyValuesHolder.ofFloat(View.ALPHA, 1.0f, 1.0f, 0.0f)
-        val translationY = PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, 0f, -40f, -80f)
-
-        ObjectAnimator.ofPropertyValuesHolder(targetFloatingIcon, scaleX, scaleY, alpha, translationY).apply {
-            duration = 1400
-            interpolator = OvershootInterpolator(1.5f)
-            start()
-        }
-
-        // 2. Display reaction directly below profile avatar
+        // Display reaction directly below profile avatar and float for 5 seconds
+        targetBelowIcon.animate().cancel()
         targetBelowIcon.setImageResource(iconRes)
         targetBelowIcon.visibility = View.VISIBLE
+        targetBelowIcon.alpha = 1.0f
         targetBelowIcon.scaleX = 0f
         targetBelowIcon.scaleY = 0f
         targetBelowIcon.animate()
-            .scaleX(1.15f)
-            .scaleY(1.15f)
+            .scaleX(1.2f)
+            .scaleY(1.2f)
             .setDuration(250)
             .withEndAction {
                 targetBelowIcon.animate()
                     .scaleX(1.0f)
                     .scaleY(1.0f)
                     .setDuration(150)
+                    .withEndAction {
+                        // Float / stay visible for 5000ms (5 seconds), then smoothly fade out
+                        targetBelowIcon.animate()
+                            .alpha(0f)
+                            .setStartDelay(5000L)
+                            .setDuration(400)
+                            .withEndAction {
+                                targetBelowIcon.visibility = View.INVISIBLE
+                                targetBelowIcon.alpha = 1.0f
+                            }
+                            .start()
+                    }
                     .start()
             }
             .start()

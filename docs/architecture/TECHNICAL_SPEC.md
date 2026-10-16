@@ -714,20 +714,22 @@ To ensure zero quota exhaustion and protect mobile battery, the Anti Gravity cli
 - Instead of generic placeholders, dedicated crisp SVG vector drawables (`ic_avatar_male.xml`, `ic_avatar_female.xml`) represent players on the profile setup screen, dual PvP HUD, and victory summaries.
 - Player genders are exchanged during room creation and join operations, serialized in `gameState.playerGenders`, and mapped on clients.
 
-### 6.2 Circular Turn Timer (`CircularTurnTimerView`)
+### 6.2 Circular Turn Timer (`CircularTurnTimerView`) & Timeout Advantage
 - To elevate turn clarity without occupying bulky screen real estate, a sleek circular countdown ring hugs the outer border of the active player's circular avatar:
-  - **Dynamic Arc Sweep:** Continuously animates from 360° to 0° over the allotted turn window (default 30 seconds).
+  - **10-Second Countdown:** Continuously animates from 360° to 0° over the allotted turn window (10 seconds).
   - **Color State Transition:** Transitions smoothly from vibrant coral/primary pink (`#F06292`) during normal time to alert ruby crimson (`#E53935`) when remaining time falls below 25%.
-  - **Auto-Switching:** Automatically shifts to the opponent's avatar on turn change and resets progress.
+  - **Timeout Advantage Resolution:** If the 10-second countdown runs out while the active player is still connected, turn advantage immediately passes to the partner (`move.isTimeout === true`) without forfeiting the game, ensuring uninterrupted casual flow.
+  - **Disconnection Alert:** If polling heartbeats fail for 3 consecutive intervals (~6-9s) during active play, an alert dialog notifies the player that their partner lost connection, automatically resolving upon reconnection.
 
 ### 6.3 Dual PvP HUD & Below-Profile Reaction Display
 - Avatars sit on opposing flanks of the arena header (Host vs Partner) with live match scores in between.
-- When a player receives a reaction, a rounded badge pops in with a smooth spring scale animation directly beneath that player's profile avatar and auto-dismisses after 2.5 seconds.
+- When a player receives a reaction, a rounded badge pops in directly beneath that player's profile avatar, floats visibly for **5.0 seconds**, and smoothly fades out.
 
-### 6.4 Arena Bottom Action Bar & Nudge Buzzer
+### 6.4 Arena Bottom Action Bar, Nudge Buzzer & Cooldown
 - **Central Nudge Button:** An oversized, elevated circular action button (`bg_nudge_circle.xml`) sits prominently in the center of the bottom arena bar.
-  - Tapping sends an instant `NUDGE` event.
-  - Triggers a synchronized haptic buzz pattern on the receiving partner's device to playfully alert them when it's their turn.
+  - Tapping sends an instant `NUDGE` event with instant local tactile feedback.
+  - Triggers a synchronized haptic vibration pattern on the receiving partner's device to playfully alert them when it's their turn.
+- **5-Second Cooldown:** Tapping any reaction or nudge initiates a 5.0-second cooldown period during which all reaction buttons are grayed out (`alpha = 0.35f`) and disabled, preventing spam.
 - **Flanking Reaction Bar:** Fast-reaction buttons flank the central nudge button:
   - `HEART` (Romantic appreciation)
   - `THUMBS_UP` (Encouragement / Good move)

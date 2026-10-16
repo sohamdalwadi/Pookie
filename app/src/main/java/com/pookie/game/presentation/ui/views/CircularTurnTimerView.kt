@@ -54,7 +54,7 @@ class CircularTurnTimerView @JvmOverloads constructor(
         invalidate()
     }
 
-    fun startCountdown(durationMs: Long = 30000L, onFinish: (() -> Unit)? = null) {
+    fun startCountdown(durationMs: Long = 10000L, onFinish: (() -> Unit)? = null) {
         cancelCountdown()
         isActive = true
         progress = 1.0f
@@ -67,6 +67,13 @@ class CircularTurnTimerView @JvmOverloads constructor(
                 progress = animator.animatedValue as Float
                 invalidate()
             }
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    if (progress <= 0.01f) {
+                        onFinish?.invoke()
+                    }
+                }
+            })
         }
         countdownAnimator?.start()
     }

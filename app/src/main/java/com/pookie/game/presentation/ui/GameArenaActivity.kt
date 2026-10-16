@@ -46,6 +46,7 @@ class GameArenaActivity : AppCompatActivity() {
 
     private val gson = Gson()
     private var rematchDialog: AlertDialog? = null
+    private var disconnectDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,32 +101,65 @@ class GameArenaActivity : AppCompatActivity() {
             viewModel.requestRematch()
         }
 
-        // Live Reaction buttons & Middle Nudge Button
-        btnReactionHeart.setOnClickListener {
-            viewModel.sendReaction(ReactionType.HEART)
+        // 10-Second Turn Timeout Hook
+        dualPvpHud.onTurnTimeout = {
+            viewModel.passTurnOnTimeout()
         }
-        btnReactionThumbsUp.setOnClickListener {
-            viewModel.sendReaction(ReactionType.THUMBS_UP)
-        }
-        btnNudge.setOnClickListener {
-            btnNudge.animate().scaleX(1.3f).scaleY(1.3f).setDuration(120).withEndAction {
-                btnNudge.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start()
-            }.start()
-            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator?.vibrate(android.os.VibrationEffect.createOneShot(100, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator?.vibrate(100)
+
+        // Live Reaction buttons & Middle Nudge Button (5-second cooldown with grayed out state)
+        var isReactionCooldown = false
+        val reactionButtons = listOf(
+            btnReactionHeart,
+            btnReactionThumbsUp,
+            btnNudge,
+            btnReactionThumbsDown,
+            btnReactionLightning
+        )
+
+        fun triggerReactionWithCooldown(reactionType: ReactionType) {
+            if (isReactionCooldown) return
+            isReactionCooldown = true
+
+            // Gray out reaction buttons during 5s cooldown
+            reactionButtons.forEach { btn ->
+                btn.isEnabled = false
+                btn.animate().alpha(0.35f).setDuration(150).start()
             }
-            viewModel.sendReaction(ReactionType.NUDGE)
+
+            if (reactionType == ReactionType.NUDGE) {
+                btnNudge.animate().scaleX(1.3f).scaleY(1.3f).setDuration(120).withEndAction {
+                    btnNudge.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start()
+                }.start()
+
+                // Self vibrate immediately on tap safely
+                try {
+                    val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        vibrator?.vibrate(android.os.VibrationEffect.createOneShot(120, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        vibrator?.vibrate(120)
+                    }
+                } catch (_: Exception) {}
+            }
+
+            viewModel.sendReaction(reactionType)
+
+            lifecycleScope.launch {
+                kotlinx.coroutines.delay(5000L)
+                reactionButtons.forEach { btn ->
+                    btn.isEnabled = true
+                    btn.animate().alpha(1.0f).setDuration(200).start()
+                }
+                isReactionCooldown = false
+            }
         }
-        btnReactionThumbsDown.setOnClickListener {
-            viewModel.sendReaction(ReactionType.THUMBS_DOWN)
-        }
-        btnReactionLightning.setOnClickListener {
-            viewModel.sendReaction(ReactionType.LIGHTNING)
-        }
+
+        btnReactionHeart.setOnClickListener { triggerReactionWithCooldown(ReactionType.HEART) }
+        btnReactionThumbsUp.setOnClickListener { triggerReactionWithCooldown(ReactionType.THUMBS_UP) }
+        btnNudge.setOnClickListener { triggerReactionWithCooldown(ReactionType.NUDGE) }
+        btnReactionThumbsDown.setOnClickListener { triggerReactionWithCooldown(ReactionType.THUMBS_DOWN) }
+        btnReactionLightning.setOnClickListener { triggerReactionWithCooldown(ReactionType.LIGHTNING) }
 
         // Setup Board Views according to Game Type
         when (initialRoom.gameType) {
@@ -215,17 +249,35 @@ class GameArenaActivity : AppCompatActivity() {
                     is GameViewEffect.PlayReactionAnimation -> {
                         dualPvpHud.triggerReaction(effect.isPlayer1, effect.reactionType)
                         if (effect.reactionType == ReactionType.NUDGE) {
-                            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
-                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 150, 100, 150), -1))
-                            } else {
-                                @Suppress("DEPRECATION")
-                                vibrator?.vibrate(longArrayOf(0, 150, 100, 150), -1)
-                            }
+                            try {
+                                val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                    vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 150, 100, 150), -1))
+                                } else {
+                                    @Suppress("DEPRECATION")
+                                    vibrator?.vibrate(longArrayOf(0, 150, 100, 150), -1)
+                                }
+                            } catch (_: Exception) {}
                         }
                     }
                     is GameViewEffect.ShowRematchDialog -> {
                         showRematchDialog(effect.isVictory, effect.isDraw, effect.summary)
+                    }
+                    is GameViewEffect.ShowConnectionLostDialog -> {
+                        if (effect.isDisconnected) {
+                            if (disconnectDialog == null || !disconnectDialog!!.isShowing) {
+                                disconnectDialog = AlertDialog.Builder(this@GameArenaActivity)
+                                    .setTitle("Connection Lost")
+                                    .setMessage(effect.message)
+                                    .setCancelable(true)
+                                    .setPositiveButton("Dismiss", null)
+                                    .show()
+                            }
+                        } else {
+                            disconnectDialog?.dismiss()
+                            disconnectDialog = null
+                            Toast.makeText(this@GameArenaActivity, "Connected back to partner!", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             }
