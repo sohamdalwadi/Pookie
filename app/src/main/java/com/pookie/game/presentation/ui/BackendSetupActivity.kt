@@ -102,6 +102,11 @@ class BackendSetupActivity : AppCompatActivity() {
             viewModel.testAndSaveBackend(input)
         }
 
+        btnTestAndSave.setOnLongClickListener {
+            showDemoKeyPasswordDialog()
+            true
+        }
+
         btnHowToSetup.setOnClickListener {
             showHowToSetupDialog()
         }
@@ -181,6 +186,39 @@ class BackendSetupActivity : AppCompatActivity() {
                     ServiceLocator.isDebugUnlockedInSession = true
                     updateDebugVisibility()
                     Toast.makeText(this, "Developer debug menu unlocked for this session.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Incorrect password.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showDemoKeyPasswordDialog() {
+        val input = EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            hint = "Enter PIN"
+            setPadding(48, 32, 48, 32)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Use Demo Backend Key")
+            .setMessage("Enter password to use demo backend key:")
+            .setView(input)
+            .setPositiveButton("Apply") { _, _ ->
+                val entered = input.text.toString().trim()
+                if (com.pookie.game.presentation.common.DebugAuthSecurity.verifyPassword(entered)) {
+                    val demoKey = com.pookie.game.presentation.common.DebugAuthSecurity.getDemoDeploymentId()
+                    if (demoKey.isBlank()) {
+                        Toast.makeText(this, "Demo key is not configured in build.", Toast.LENGTH_LONG).show()
+                        return@setPositiveButton
+                    }
+                    editDeploymentId.setText(demoKey)
+                    ServiceLocator.preferencesRepository.saveBackendDeploymentId(demoKey)
+                    ServiceLocator.preferencesRepository.saveBackendUrl("")
+                    ServiceLocator.isMockMode = false
+                    Toast.makeText(this, "Demo key applied! Verifying...", Toast.LENGTH_SHORT).show()
+                    viewModel.testAndSaveBackend(demoKey)
                 } else {
                     Toast.makeText(this, "Incorrect password.", Toast.LENGTH_SHORT).show()
                 }

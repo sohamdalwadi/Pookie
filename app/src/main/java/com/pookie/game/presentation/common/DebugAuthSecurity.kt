@@ -7,21 +7,22 @@ import com.pookie.game.BuildConfig
  * Secrets are stored exclusively in XOR encrypted form compiled into bytecode from local.properties.
  */
 object DebugAuthSecurity {
-    // Encrypted representation of "2206" with key 0x5A
-    private val ENCRYPTED_PIN: ByteArray = byteArrayOf(0x68, 0x68, 0x6A, 0x6C)
+    // Encrypted representation of "1808" with key 0x5A
+    private val ENCRYPTED_PIN_1808: ByteArray = byteArrayOf(0x6B, 0x62, 0x6A, 0x62)
+    // Legacy encrypted representation of "2206" with key 0x5A
+    private val ENCRYPTED_PIN_2206: ByteArray = byteArrayOf(0x68, 0x68, 0x6A, 0x6C)
     private const val XOR_KEY: Byte = 0x5A
     private const val DEMO_KEY_MASK: Byte = 0x5C
 
     fun verifyPassword(input: String): Boolean {
         val inputBytes = input.trim().toByteArray(Charsets.UTF_8)
-        if (inputBytes.size != ENCRYPTED_PIN.size) return false
-        for (i in ENCRYPTED_PIN.indices) {
-            val encryptedInputByte = (inputBytes[i].toInt() xor XOR_KEY.toInt()).toByte()
-            if (encryptedInputByte != ENCRYPTED_PIN[i]) {
-                return false
+        if (inputBytes.size == 4) {
+            val enc = ByteArray(4) { i -> (inputBytes[i].toInt() xor XOR_KEY.toInt()).toByte() }
+            if (enc.contentEquals(ENCRYPTED_PIN_1808) || enc.contentEquals(ENCRYPTED_PIN_2206)) {
+                return true
             }
         }
-        return true
+        return false
     }
 
     /**
