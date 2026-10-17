@@ -50,6 +50,7 @@ class GameViewModel(
     private val requestRematchUseCase: RequestRematchUseCase,
     private val submitVerdictUseCase: SubmitVerdictUseCase,
     private val allowEvaUseCase: com.pookie.game.domain.usecase.AllowEvaUseCase,
+    private val leaveRoomUseCase: com.pookie.game.domain.usecase.LeaveRoomUseCase,
     private val preferencesRepository: IPreferencesRepository,
     private val soundManager: SoundManager
 ) : ViewModel() {
@@ -278,6 +279,17 @@ class GameViewModel(
                 _viewEffect.emit(GameViewEffect.ShowToast("Eva joined the room! Game starting!"))
             } else {
                 _viewEffect.emit(GameViewEffect.ShowToast(result.exceptionOrNull()?.message ?: "Failed to connect with Eva"))
+            }
+        }
+    }
+
+    fun leaveRoom() {
+        val currentRoom = _roomState.value ?: return
+        val myId = if (isSoloTestMode) currentRoom.host.id else myProfile.myPlayerId
+        pollingJob?.cancel()
+        if (!isSoloTestMode) {
+            viewModelScope.launch {
+                leaveRoomUseCase(currentRoom.roomCode, myId)
             }
         }
     }

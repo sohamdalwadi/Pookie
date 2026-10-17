@@ -17,6 +17,7 @@ import com.google.gson.Gson
 import com.pookie.game.R
 import com.pookie.game.di.ServiceLocator
 import com.pookie.game.domain.engine.QuizAnswerMove
+import com.pookie.game.domain.model.GameStatus
 import com.pookie.game.domain.model.GameType
 import com.pookie.game.domain.model.ReactionType
 import com.pookie.game.domain.model.Room
@@ -44,6 +45,7 @@ class GameArenaActivity : AppCompatActivity() {
             requestRematchUseCase = ServiceLocator.requestRematchUseCase,
             submitVerdictUseCase = ServiceLocator.submitVerdictUseCase,
             allowEvaUseCase = ServiceLocator.allowEvaUseCase,
+            leaveRoomUseCase = ServiceLocator.leaveRoomUseCase,
             preferencesRepository = ServiceLocator.preferencesRepository,
             soundManager = soundManager
         )
@@ -152,6 +154,7 @@ class GameArenaActivity : AppCompatActivity() {
 
         // Top bar buttons
         btnLeaveArena.setOnClickListener {
+            viewModel.leaveRoom()
             finish()
         }
 
@@ -270,6 +273,13 @@ class GameArenaActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.roomState.collect { room ->
                 if (room != null) {
+                    if (room.status == GameStatus.ABANDONED && !isFinishing && !isDestroyed) {
+                        Toast.makeText(this@GameArenaActivity, "Partner left the game.", Toast.LENGTH_SHORT).show()
+                        viewModel.leaveRoom()
+                        finish()
+                        return@collect
+                    }
+
                     textArenaRoomCode.text = room.roomCode
                     textWaitingRoomCode.text = room.roomCode
 
@@ -537,6 +547,7 @@ class GameArenaActivity : AppCompatActivity() {
         }
 
         btnDialogLeave.setOnClickListener {
+            viewModel.leaveRoom()
             rematchDialog?.dismiss()
             finish()
         }
@@ -590,6 +601,7 @@ class GameArenaActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        viewModel.leaveRoom()
         waitingTimerJob?.cancel()
         evaPromptDialog?.dismiss()
         rematchDialog?.dismiss()

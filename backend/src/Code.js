@@ -177,6 +177,8 @@ function doPost(e) {
         return handleJoinRoom(payload);
       case "ALLOW_EVA":
         return handleAllowEva(payload);
+      case "LEAVE_ROOM":
+        return handleLeaveRoom(payload);
       case "MAKE_MOVE":
         return handleMakeMove(payload);
       case "RESET_GAME":
@@ -351,6 +353,7 @@ function handleCreateRoom(payload) {
 
   const ss = getDatabaseSpreadsheet();
   const sheet = ss.getSheetByName("Rooms");
+  purgeStaleRooms(sheet);
   const roomCode = generateUniqueRoomCode(sheet);
   const now = new Date().toISOString();
 
@@ -487,6 +490,68 @@ function handleAllowEva(payload) {
     sheet.getRange(rowIndex, 1, 1, 15).setValues([roomObjectToRow(room)]);
 
     return jsonSuccess(room);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function handleLeaveRoom(payload) {
+  const roomCode = (payload.roomCode || "").toUpperCase().trim();
+  const playerId = payload.playerId;
+
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) {
+    return jsonError("CONCURRENCY_TIMEOUT", "Server busy processing request.");
+  }
+
+  try {
+    const ss = getDatabaseSpreadsheet();
+    const sheet = ss.getSheetByName("Rooms");
+    const rowIndex = findRoomRowIndex(sheet, roomCode);
+
+    if (rowIndex === -1) {
+      return jsonSuccess({ message: "Room already cleaned up or deleted.", deleted: true });
+    }
+
+    const row = sheet.getRange(rowIndex, 1, 1, 15).getValues()[0];
+    const room = rowToRoomObject(row);
+
+    const isHost = (playerId === room.host.id);
+    const isPartner = (room.partner && playerId === room.partner.id);
+
+    if (!room.gameState) room.gameState = {};
+    if (!room.gameState.leftPlayers) {
+      room.gameState.leftPlayers = { host: false, partner: false };
+    }
+
+    if (isHost) {
+      room.gameState.leftPlayers.host = true;
+    }
+    if (isPartner) {
+      room.gameState.leftPlayers.partner = true;
+    }
+
+    // If partner is Eva or partner never joined, partner is automatically considered left when host leaves
+    const isEva = (room.partner && room.partner.id === "EVA_BOT");
+    const noPartner = (room.partner === null);
+    if (isEva || noPartner) {
+      room.gameState.leftPlayers.partner = true;
+    }
+
+    const bothLeft = room.gameState.leftPlayers.host && room.gameState.leftPlayers.partner;
+
+    if (bothLeft) {
+      // Immediately delete the room row from the sheet!
+      sheet.deleteRow(rowIndex);
+      return jsonSuccess({ message: "Both players left. Room cleaned up from sheet.", deleted: true });
+    } else {
+      // Mark room as ABANDONED so the remaining player knows
+      room.status = "ABANDONED";
+      room.lastActivity = new Date().toISOString();
+      room.version += 1;
+      sheet.getRange(rowIndex, 1, 1, 15).setValues([roomObjectToRow(room)]);
+      return jsonSuccess({ message: "Player left. Waiting for other player to exit.", deleted: false, room: room });
+    }
   } finally {
     lock.releaseLock();
   }
@@ -1251,31 +1316,19 @@ function makeEvaMoveIfTurn(room) {
 }
 
 // ============================================================================
-// 7. AUTO-CLEANUP CRON TRIGGER
+// 7. AUTO-CLEANUP & STALE ROOM PURGING
 // ============================================================================
 
 /**
- * Cron trigger executed every 10-15 minutes to delete abandoned/idle rooms.
+ * Sweeps and purges abandoned, completed, or orphaned rooms from Google Sheet.
  */
-function cleanupInactiveRooms() {
-  const lock = LockService.getScriptLock();
-  if (!lock.tryLock(10000)) {
-    Logger.log("Cleanup deferred: Script lock busy.");
-    return;
-  }
-
+function purgeStaleRooms(sheet) {
   try {
-    const ss = getDatabaseSpreadsheet();
-    const sheet = ss.getSheetByName("Rooms");
     const lastRow = sheet.getLastRow();
-    if (lastRow <= 1) return;
+    if (lastRow <= 1) return 0;
 
-    const dataRange = sheet.getRange(2, 1, lastRow - 1, 15);
-    const rows = dataRange.getValues();
+    const rows = sheet.getRange(2, 1, lastRow - 1, 15).getValues();
     const now = new Date().getTime();
-    const INACTIVITY_THRESHOLD_MS = 30 * 60 * 1000;   // 30 min expiration
-    const ABANDONED_GRACE_PERIOD_MS = 10 * 60 * 1000; // 10 min for abandoned
-
     const rowsToKeep = [];
     let purgedCount = 0;
 
@@ -1284,11 +1337,31 @@ function cleanupInactiveRooms() {
       const status = row[1];
       const lastActivityTime = new Date(row[13]).getTime();
       const idleDuration = now - lastActivityTime;
+      
+      let leftPlayers = null;
+      try {
+        const gameState = row[8] ? JSON.parse(row[8]) : null;
+        leftPlayers = (gameState && gameState.leftPlayers) ? gameState.leftPlayers : null;
+      } catch (err) {}
+
+      const bothLeft = leftPlayers && leftPlayers.host && leftPlayers.partner;
 
       let shouldDelete = false;
-      if (isNaN(lastActivityTime) || idleDuration > INACTIVITY_THRESHOLD_MS) {
+
+      // 1. Both players marked as left
+      if (bothLeft) {
         shouldDelete = true;
-      } else if (status === "ABANDONED" && idleDuration > ABANDONED_GRACE_PERIOD_MS) {
+      }
+      // 2. Abandoned room older than 2 minutes
+      else if (status === "ABANDONED" && idleDuration > 2 * 60 * 1000) {
+        shouldDelete = true;
+      }
+      // 3. Completed or Finished room older than 3 minutes
+      else if ((status === "COMPLETED" || status === "FINISHED" || status === "GAME_OVER") && idleDuration > 3 * 60 * 1000) {
+        shouldDelete = true;
+      }
+      // 4. Any room idle for more than 15 minutes
+      else if (isNaN(lastActivityTime) || idleDuration > 15 * 60 * 1000) {
         shouldDelete = true;
       }
 
@@ -1304,10 +1377,29 @@ function cleanupInactiveRooms() {
       if (rowsToKeep.length > 0) {
         sheet.getRange(2, 1, rowsToKeep.length, 15).setValues(rowsToKeep);
       }
-      Logger.log("Cleanup complete. Purged " + purgedCount + " inactive rooms.");
+      Logger.log("Cleanup complete. Purged " + purgedCount + " stale rooms.");
     }
+    return purgedCount;
   } catch (err) {
-    Logger.log("Error in cleanupInactiveRooms: " + err.toString());
+    Logger.log("Error in purgeStaleRooms: " + err.toString());
+    return 0;
+  }
+}
+
+/**
+ * Cron trigger executed every 10-15 minutes or via menu to delete abandoned/idle rooms.
+ */
+function cleanupInactiveRooms() {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) {
+    Logger.log("Cleanup deferred: Script lock busy.");
+    return;
+  }
+
+  try {
+    const ss = getDatabaseSpreadsheet();
+    const sheet = ss.getSheetByName("Rooms");
+    purgeStaleRooms(sheet);
   } finally {
     lock.releaseLock();
   }

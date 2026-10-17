@@ -172,6 +172,15 @@ class GameRepositoryImpl(
         mapDtoToRoom(dto)
     }
 
+    override suspend fun leaveRoom(roomCode: String, playerId: String): Result<Boolean> = runCatching {
+        val payload = mapOf(
+            "roomCode" to roomCode,
+            "playerId" to playerId
+        )
+        val response = api.post("LEAVE_ROOM", payload)
+        response.isSuccess
+    }
+
     private fun mapDtoToRoom(dto: RoomDto): Room {
         return Room(
             roomCode = dto.roomCode,

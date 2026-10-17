@@ -275,6 +275,11 @@ class MockGameRepository : IGameRepository {
         return Result.success(updated)
     }
 
+    override suspend fun leaveRoom(roomCode: String, playerId: String): Result<Boolean> {
+        rooms.remove(roomCode)
+        return Result.success(true)
+    }
+
     private data class StateDelta(
         val stateJson: String,
         val nextTurn: String,

@@ -20,4 +20,5 @@ interface IGameRepository {
     suspend fun requestRematch(roomCode: String, playerId: String): Result<Room>
     suspend fun submitVerdict(roomCode: String, playerId: String, verdict: String): Result<Room>
     suspend fun allowEva(roomCode: String): Result<Room>
+    suspend fun leaveRoom(roomCode: String, playerId: String): Result<Boolean>
 }
