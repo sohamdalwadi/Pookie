@@ -81,6 +81,9 @@ object ServiceLocator {
     val submitVerdictUseCase: com.pookie.game.domain.usecase.SubmitVerdictUseCase
         get() = com.pookie.game.domain.usecase.SubmitVerdictUseCase(activeGameRepository)
 
+    val allowEvaUseCase: com.pookie.game.domain.usecase.AllowEvaUseCase
+        get() = com.pookie.game.domain.usecase.AllowEvaUseCase(activeGameRepository)
+
     val checkOtaUpdateUseCase: CheckOtaUpdateUseCase by lazy {
         CheckOtaUpdateUseCase(otaRepository)
     }

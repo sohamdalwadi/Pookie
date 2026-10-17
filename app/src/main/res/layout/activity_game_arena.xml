@@ -202,6 +202,25 @@
                     android:text="Show QR"
                     android:paddingHorizontal="18dp" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/textWaitingTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Auto-prompt in: 02:00"
+                android:textColor="@color/mint_accent"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnPlayWithEva"
+                style="@style/Widget.Pookie.Button.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginTop="10dp"
+                android:text="Play with Eva (AI)"
+                android:paddingHorizontal="22dp" />
         </LinearLayout>
     </FrameLayout>
 

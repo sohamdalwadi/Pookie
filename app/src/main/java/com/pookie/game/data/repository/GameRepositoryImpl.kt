@@ -162,6 +162,16 @@ class GameRepositoryImpl(
         mapDtoToRoom(dto)
     }
 
+    override suspend fun allowEva(roomCode: String): Result<Room> = runCatching {
+        val payload = mapOf("roomCode" to roomCode)
+        val response = api.post("ALLOW_EVA", payload)
+        if (!response.isSuccess || response.data == null) {
+            throw Exception(response.error?.message ?: "Failed to allow Eva")
+        }
+        val dto = gson.fromJson(response.data, RoomDto::class.java)
+        mapDtoToRoom(dto)
+    }
+
     private fun mapDtoToRoom(dto: RoomDto): Room {
         return Room(
             roomCode = dto.roomCode,

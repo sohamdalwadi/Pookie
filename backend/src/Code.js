@@ -175,6 +175,8 @@ function doPost(e) {
         return handleCreateRoom(payload);
       case "JOIN_ROOM":
         return handleJoinRoom(payload);
+      case "ALLOW_EVA":
+        return handleAllowEva(payload);
       case "MAKE_MOVE":
         return handleMakeMove(payload);
       case "RESET_GAME":
@@ -293,6 +295,15 @@ function handleGetState(params) {
 
   const row = sheet.getRange(rowIndex, 1, 1, 15).getValues()[0];
   const room = rowToRoomObject(row);
+
+  // If Eva is the partner and it is currently Eva's turn, trigger her move
+  if (room.partner && room.partner.id === "EVA_BOT" && room.status === "PLAYING" && room.currentTurn === "PARTNER") {
+    if (makeEvaMoveIfTurn(room)) {
+      room.lastActivity = new Date().toISOString();
+      room.version += 1;
+      sheet.getRange(rowIndex, 1, 1, 15).setValues([roomObjectToRow(room)]);
+    }
+  }
 
   // ETag-style Version Check (Returns lightweight 58-byte response if unchanged)
   if (!isNaN(clientVersion) && clientVersion === room.version) {
@@ -434,6 +445,53 @@ function handleJoinRoom(payload) {
   }
 }
 
+function handleAllowEva(payload) {
+  const roomCode = (payload.roomCode || "").toUpperCase().trim();
+
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) {
+    return jsonError("CONCURRENCY_TIMEOUT", "Server busy processing a request.");
+  }
+
+  try {
+    const ss = getDatabaseSpreadsheet();
+    const sheet = ss.getSheetByName("Rooms");
+    const rowIndex = findRoomRowIndex(sheet, roomCode);
+
+    if (rowIndex === -1) {
+      return jsonError("ROOM_NOT_FOUND", "Room '" + roomCode + "' does not exist.");
+    }
+
+    const row = sheet.getRange(rowIndex, 1, 1, 15).getValues()[0];
+    const room = rowToRoomObject(row);
+
+    if (room.partner !== null && room.partner.id !== "EVA_BOT") {
+      return jsonError("ALREADY_JOINED", "A partner has already joined this room.");
+    }
+
+    const evaGender = (room.host.gender === "MALE") ? "FEMALE" : "MALE";
+    room.partner = {
+      id: "EVA_BOT",
+      name: "Eva (AI)",
+      score: 0,
+      gender: evaGender
+    };
+    room.status = "PLAYING";
+    room.lastActivity = new Date().toISOString();
+    room.version += 1;
+
+    if (room.currentTurn === "PARTNER") {
+      makeEvaMoveIfTurn(room);
+    }
+
+    sheet.getRange(rowIndex, 1, 1, 15).setValues([roomObjectToRow(room)]);
+
+    return jsonSuccess(room);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function handleMakeMove(payload) {
   const roomCode = (payload.roomCode || "").toUpperCase().trim();
   const playerId = payload.playerId;
@@ -533,6 +591,11 @@ function handleMakeMove(payload) {
       };
     }
 
+    // Check if partner is Eva and it is Eva's turn
+    if (room.partner && room.partner.id === "EVA_BOT") {
+      makeEvaMoveIfTurn(room);
+    }
+
     room.lastActivity = new Date().toISOString();
     room.version += 1;
 
@@ -567,6 +630,10 @@ function handleResetGame(payload) {
       room.rematchState.partnerReady = true;
     }
 
+    if (room.partner && room.partner.id === "EVA_BOT") {
+      room.rematchState.partnerReady = true;
+    }
+
     // Both accepted rematch: Reset board!
     if (room.rematchState.hostReady && room.rematchState.partnerReady) {
       room.status = "PLAYING";
@@ -588,6 +655,10 @@ function handleResetGame(payload) {
         };
       } else if (room.gameType === "SOUL_SYNC") {
         room.gameState = createSoulSyncInitialState(room.host.id, room.host.gender || "MALE");
+      }
+
+      if (room.partner && room.partner.id === "EVA_BOT" && room.currentTurn === "PARTNER") {
+        makeEvaMoveIfTurn(room);
       }
     }
 
@@ -717,6 +788,12 @@ function handleSubmitVerdict(payload) {
 
     room.gameState.verdicts[roleKey] = verdict;
     room.gameState.playerReady[roleKey] = true;
+
+    // If partner is Eva, automatically set Eva's verdict as MATCH
+    if (room.partner && room.partner.id === "EVA_BOT" && !room.gameState.verdicts.partner) {
+      room.gameState.verdicts.partner = "MATCH";
+      room.gameState.playerReady.partner = true;
+    }
 
     // Check if BOTH players have submitted their verdict
     const hostVerdict = room.gameState.verdicts.host;
@@ -990,7 +1067,191 @@ function reduceSoulSync(state, move, player) {
 }
 
 // ============================================================================
-// 6. AUTO-CLEANUP CRON TRIGGER
+// 6. EVA AI BOT ENGINE (Serverless Opponent for Solo & Missing Partner)
+// ============================================================================
+
+const EVA_SOUL_SYNC_ANSWERS = [
+  "Late night drives with our favorite playlist",
+  "Hot chocolate and cozy blankets on the couch",
+  "When you laughed so hard your drink almost spilled",
+  "Eating street tacos at midnight in the car",
+  "The day we got caught in the summer rain together",
+  "Trip to Japan to see cherry blossoms and eat ramen",
+  "Your contagious laugh when you watch silly cat videos",
+  "Pizza with extra cheese and garlic crust",
+  "When you held my hand for the first time unexpectedly"
+];
+
+function calculateEvaTicTacToeMove(grid) {
+  if (!grid || !Array.isArray(grid)) return -1;
+  const botSymbol = "O";
+  const hostSymbol = "X";
+  const lines = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6]
+  ];
+
+  // 1. Win in 1 move
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    const vals = [grid[a], grid[b], grid[c]];
+    if (vals.filter(function(v) { return v === botSymbol; }).length === 2 &&
+        vals.filter(function(v) { return v === null || v === undefined; }).length === 1) {
+      if (grid[a] === null || grid[a] === undefined) return a;
+      if (grid[b] === null || grid[b] === undefined) return b;
+      if (grid[c] === null || grid[c] === undefined) return c;
+    }
+  }
+
+  // 2. Block Host win in 1 move
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    const vals = [grid[a], grid[b], grid[c]];
+    if (vals.filter(function(v) { return v === hostSymbol; }).length === 2 &&
+        vals.filter(function(v) { return v === null || v === undefined; }).length === 1) {
+      if (grid[a] === null || grid[a] === undefined) return a;
+      if (grid[b] === null || grid[b] === undefined) return b;
+      if (grid[c] === null || grid[c] === undefined) return c;
+    }
+  }
+
+  // 3. Take center
+  if (grid[4] === null || grid[4] === undefined) return 4;
+
+  // 4. Take corners
+  const corners = [0, 2, 6, 8].filter(function(idx) { return grid[idx] === null || grid[idx] === undefined; });
+  if (corners.length > 0) {
+    return corners[Math.floor(Math.random() * corners.length)];
+  }
+
+  // 5. Open edges
+  const edges = [1, 3, 5, 7].filter(function(idx) { return grid[idx] === null || grid[idx] === undefined; });
+  if (edges.length > 0) {
+    return edges[Math.floor(Math.random() * edges.length)];
+  }
+
+  return -1;
+}
+
+function calculateEvaDotsAndBoxesMove(state) {
+  const gridSize = state.gridSize || 3;
+  const claimedLines = state.claimedLines || {};
+  const allLines = [];
+
+  for (let r = 0; r <= gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      allLines.push("H_" + r + "_" + c);
+    }
+  }
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c <= gridSize; c++) {
+      allLines.push("V_" + r + "_" + c);
+    }
+  }
+
+  const unclaimed = allLines.filter(function(l) { return !claimedLines[l]; });
+  if (unclaimed.length === 0) return null;
+
+  function getLinesForBox(r, c) {
+    return ["H_" + r + "_" + c, "H_" + (r + 1) + "_" + c, "V_" + r + "_" + c, "V_" + r + "_" + (c + 1)];
+  }
+
+  // 1. Completing box
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      const boxLines = getLinesForBox(r, c);
+      const missing = boxLines.filter(function(l) { return !claimedLines[l]; });
+      if (missing.length === 1) {
+        return missing[0];
+      }
+    }
+  }
+
+  // 2. Safe lines that do not create 3rd line on any box
+  const safeLines = unclaimed.filter(function(candidate) {
+    const hypoClaims = Object.assign({}, claimedLines);
+    hypoClaims[candidate] = "PARTNER";
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        const boxLines = getLinesForBox(r, c);
+        const count = boxLines.filter(function(l) { return !!hypoClaims[l]; }).length;
+        if (count === 3) return false;
+      }
+    }
+    return true;
+  });
+
+  if (safeLines.length > 0) {
+    return safeLines[Math.floor(Math.random() * safeLines.length)];
+  }
+
+  return unclaimed[Math.floor(Math.random() * unclaimed.length)];
+}
+
+function makeEvaMoveIfTurn(room) {
+  if (!room || !room.partner || room.partner.id !== "EVA_BOT") return false;
+  if (room.status !== "PLAYING") return false;
+
+  let moved = false;
+  const gameType = room.gameType;
+
+  if (gameType === "TIC_TAC_TOE") {
+    if (room.currentTurn === "PARTNER" && !room.gameState.winner) {
+      const grid = room.gameState.grid || room.gameState.board;
+      const cell = calculateEvaTicTacToeMove(grid);
+      if (cell >= 0) {
+        const res = reduceTicTacToe(room.gameState, { cellIndex: cell }, "PARTNER");
+        if (!res.error) {
+          room.gameState = res.nextState;
+          room.currentTurn = res.nextTurn;
+          if (res.winner) {
+            room.status = "COMPLETED";
+            if (res.winner === "PARTNER") room.partner.score = (room.partner.score || 0) + 1;
+            if (res.winner === "HOST") room.host.score = (room.host.score || 0) + 1;
+          }
+          moved = true;
+        }
+      }
+    }
+  } else if (gameType === "DOTS_AND_BOXES") {
+    while (room.currentTurn === "PARTNER" && !room.gameState.winner) {
+      const lineKey = calculateEvaDotsAndBoxesMove(room.gameState);
+      if (!lineKey) break;
+      const res = reduceDotsAndBoxes(room.gameState, { lineKey: lineKey }, "PARTNER");
+      if (res.error) break;
+      room.gameState = res.nextState;
+      room.currentTurn = res.nextTurn;
+      if (res.winner) {
+        room.status = "COMPLETED";
+        if (res.winner === "PARTNER") room.partner.score = (room.partner.score || 0) + 1;
+        if (res.winner === "HOST") room.host.score = (room.host.score || 0) + 1;
+        break;
+      }
+      moved = true;
+    }
+  } else if (gameType === "SOUL_SYNC") {
+    if (room.gameState.phase === "ANSWERING" && (room.gameState.partnerAnswer === null || room.gameState.partnerAnswer === undefined)) {
+      const ans = EVA_SOUL_SYNC_ANSWERS[Math.floor(Math.random() * EVA_SOUL_SYNC_ANSWERS.length)];
+      const res = reduceSoulSync(room.gameState, { text: ans }, "PARTNER");
+      room.gameState = res.nextState;
+      moved = true;
+    }
+  } else if (gameType === "COUPLES_QUIZ") {
+    if (room.gameState.partnerAnswer === null || room.gameState.partnerAnswer === undefined) {
+      const opts = ["A", "B", "C", "D"];
+      const ans = opts[Math.floor(Math.random() * opts.length)];
+      const res = reduceCouplesQuiz(room.gameState, { answer: ans }, "PARTNER");
+      room.gameState = res.nextState;
+      moved = true;
+    }
+  }
+
+  return moved;
+}
+
+// ============================================================================
+// 7. AUTO-CLEANUP CRON TRIGGER
 // ============================================================================
 
 /**

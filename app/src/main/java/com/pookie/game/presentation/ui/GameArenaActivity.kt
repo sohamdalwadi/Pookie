@@ -29,6 +29,8 @@ import com.pookie.game.presentation.ui.views.SoulSyncView
 import com.pookie.game.presentation.ui.views.TicTacToeBoardView
 import com.pookie.game.presentation.viewmodel.GameViewEffect
 import com.pookie.game.presentation.viewmodel.GameViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class GameArenaActivity : AppCompatActivity() {
@@ -41,6 +43,7 @@ class GameArenaActivity : AppCompatActivity() {
             sendReactionUseCase = ServiceLocator.sendReactionUseCase,
             requestRematchUseCase = ServiceLocator.requestRematchUseCase,
             submitVerdictUseCase = ServiceLocator.submitVerdictUseCase,
+            allowEvaUseCase = ServiceLocator.allowEvaUseCase,
             preferencesRepository = ServiceLocator.preferencesRepository,
             soundManager = soundManager
         )
@@ -49,6 +52,8 @@ class GameArenaActivity : AppCompatActivity() {
     private val gson = Gson()
     private var rematchDialog: AlertDialog? = null
     private var disconnectDialog: AlertDialog? = null
+    private var evaPromptDialog: AlertDialog? = null
+    private var waitingTimerJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,6 +122,8 @@ class GameArenaActivity : AppCompatActivity() {
         val textWaitingRoomCode = findViewById<TextView>(R.id.textWaitingRoomCode)
         val btnWaitingCopyCode = findViewById<Button>(R.id.btnWaitingCopyCode)
         val btnWaitingShowQr = findViewById<Button>(R.id.btnWaitingShowQr)
+        val textWaitingTimer = findViewById<TextView>(R.id.textWaitingTimer)
+        val btnPlayWithEva = findViewById<Button>(R.id.btnPlayWithEva)
 
         textWaitingRoomCode.text = initialRoom.roomCode
 
@@ -129,6 +136,10 @@ class GameArenaActivity : AppCompatActivity() {
 
         btnWaitingShowQr.setOnClickListener {
             showQrDialog(initialRoom.roomCode)
+        }
+
+        btnPlayWithEva.setOnClickListener {
+            showEvaConfirmationDialog()
         }
 
         val btnReactionHeart = findViewById<ImageView>(R.id.btnReactionHeart)
@@ -264,6 +275,16 @@ class GameArenaActivity : AppCompatActivity() {
 
                     val isWaiting = room.partner == null
                     layoutWaitingForPartner.visibility = if (isWaiting) View.VISIBLE else View.GONE
+
+                    if (isWaiting) {
+                        if (waitingTimerJob == null || waitingTimerJob?.isActive != true) {
+                            startWaitingTimer(textWaitingTimer)
+                        }
+                    } else {
+                        waitingTimerJob?.cancel()
+                        waitingTimerJob = null
+                        evaPromptDialog?.dismiss()
+                    }
 
                     if (previousPartner == null && room.partner != null) {
                         soundManager.playReactionSound()
@@ -521,5 +542,57 @@ class GameArenaActivity : AppCompatActivity() {
         }
 
         rematchDialog?.show()
+    }
+
+    private fun showEvaConfirmationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Play with Eva")
+            .setMessage("Would you like Eva (AI) to join the room and play with you?")
+            .setPositiveButton("Allow Eva") { _, _ ->
+                viewModel.allowEva()
+            }
+            .setNegativeButton("Keep Waiting", null)
+            .show()
+    }
+
+    private fun showEvaPromptDialog(textWaitingTimer: TextView) {
+        if (evaPromptDialog?.isShowing == true) return
+        evaPromptDialog = AlertDialog.Builder(this)
+            .setTitle("Partner has not joined")
+            .setMessage("Your partner has not joined yet after 2 minutes. Would you like Eva (AI) to join the room and play with you?")
+            .setPositiveButton("Allow Eva") { _, _ ->
+                viewModel.allowEva()
+            }
+            .setNegativeButton("Wait Longer") { _, _ ->
+                startWaitingTimer(textWaitingTimer)
+            }
+            .setCancelable(true)
+            .show()
+    }
+
+    private fun startWaitingTimer(textWaitingTimer: TextView) {
+        waitingTimerJob?.cancel()
+        waitingTimerJob = lifecycleScope.launch {
+            var remainingSeconds = 120
+            while (remainingSeconds > 0) {
+                val minutes = remainingSeconds / 60
+                val seconds = remainingSeconds % 60
+                textWaitingTimer.text = String.format("Auto-prompt in: %02d:%02d", minutes, seconds)
+                delay(1000L)
+                remainingSeconds--
+            }
+            textWaitingTimer.text = "Partner missing"
+            if (viewModel.roomState.value?.partner == null && !isFinishing && !isDestroyed) {
+                showEvaPromptDialog(textWaitingTimer)
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        waitingTimerJob?.cancel()
+        evaPromptDialog?.dismiss()
+        rematchDialog?.dismiss()
+        disconnectDialog?.dismiss()
     }
 }

@@ -19,4 +19,5 @@ interface IGameRepository {
     suspend fun sendReaction(roomCode: String, playerId: String, reaction: ReactionType): Result<Boolean>
     suspend fun requestRematch(roomCode: String, playerId: String): Result<Room>
     suspend fun submitVerdict(roomCode: String, playerId: String, verdict: String): Result<Room>
+    suspend fun allowEva(roomCode: String): Result<Room>
 }

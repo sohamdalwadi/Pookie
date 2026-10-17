@@ -262,6 +262,19 @@ class MockGameRepository : IGameRepository {
         return Result.success(updated)
     }
 
+    override suspend fun allowEva(roomCode: String): Result<Room> {
+        val room = rooms[roomCode] ?: return Result.failure(Exception("Room not found"))
+        val evaGender = if (room.host.gender == com.pookie.game.domain.model.Gender.MALE)
+            com.pookie.game.domain.model.Gender.FEMALE else com.pookie.game.domain.model.Gender.MALE
+        val updated = room.copy(
+            partner = Player(id = "EVA_BOT", name = "Eva (AI)", score = 0, gender = evaGender),
+            status = GameStatus.IN_PROGRESS,
+            version = room.version + 1
+        )
+        rooms[roomCode] = updated
+        return Result.success(updated)
+    }
+
     private data class StateDelta(
         val stateJson: String,
         val nextTurn: String,

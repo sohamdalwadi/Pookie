@@ -49,6 +49,7 @@ class GameViewModel(
     private val sendReactionUseCase: SendReactionUseCase,
     private val requestRematchUseCase: RequestRematchUseCase,
     private val submitVerdictUseCase: SubmitVerdictUseCase,
+    private val allowEvaUseCase: com.pookie.game.domain.usecase.AllowEvaUseCase,
     private val preferencesRepository: IPreferencesRepository,
     private val soundManager: SoundManager
 ) : ViewModel() {
@@ -261,6 +262,22 @@ class GameViewModel(
                 }
             } else {
                 _viewEffect.emit(GameViewEffect.ShowToast(result.exceptionOrNull()?.message ?: "Failed to submit verdict"))
+            }
+        }
+    }
+
+    fun allowEva() {
+        val currentRoom = _roomState.value ?: return
+        viewModelScope.launch {
+            soundManager.playReactionSound()
+            val result = allowEvaUseCase(currentRoom.roomCode)
+            if (result.isSuccess) {
+                val updated = result.getOrThrow()
+                _roomState.value = updated
+                parseGameState(updated)
+                _viewEffect.emit(GameViewEffect.ShowToast("Eva joined the room! Game starting!"))
+            } else {
+                _viewEffect.emit(GameViewEffect.ShowToast(result.exceptionOrNull()?.message ?: "Failed to connect with Eva"))
             }
         }
     }
