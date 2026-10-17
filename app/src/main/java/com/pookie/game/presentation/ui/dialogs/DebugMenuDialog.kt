@@ -10,6 +10,7 @@ import com.pookie.game.di.ServiceLocator
 import com.pookie.game.domain.model.GameType
 import com.pookie.game.presentation.ui.BackendSetupActivity
 import com.pookie.game.presentation.ui.GameArenaActivity
+import com.pookie.game.presentation.ui.LobbyActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -60,12 +61,7 @@ object DebugMenuDialog {
                     2 -> launchSoloTestGame(activity, GameType.COUPLES_QUIZ)
                     3 -> launchSoloTestGame(activity, GameType.SOUL_SYNC)
                     4 -> toggleBackendMode(activity)
-                    5 -> {
-                        val demoKey = com.pookie.game.presentation.common.DebugAuthSecurity.getDemoDeploymentId()
-                        ServiceLocator.preferencesRepository.saveBackendDeploymentId(demoKey)
-                        ServiceLocator.isMockMode = false
-                        Toast.makeText(activity, "Demo backend key applied.", Toast.LENGTH_SHORT).show()
-                    }
+                    5 -> loadDemoKey(activity)
                     6 -> inspectConfig(activity)
                     7 -> show401Diagnostic(activity)
                     8 -> resetPreferences(activity)
@@ -149,6 +145,60 @@ object DebugMenuDialog {
             )
             .setPositiveButton("Got It", null)
             .show()
+    }
+
+    private fun loadDemoKey(activity: Activity) {
+        val demoKey = com.pookie.game.presentation.common.DebugAuthSecurity.getDemoDeploymentId()
+        if (demoKey.isBlank()) {
+            AlertDialog.Builder(activity)
+                .setTitle("Demo Key Missing")
+                .setMessage("No demo deployment ID was compiled into this build. Please configure POOKIE_DEMO_DEPLOYMENT_ID in local.properties.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+
+        ServiceLocator.preferencesRepository.saveBackendDeploymentId(demoKey)
+        ServiceLocator.preferencesRepository.saveBackendUrl("")
+        ServiceLocator.isMockMode = false
+
+        if (activity is BackendSetupActivity) {
+            val editDeploymentId = activity.findViewById<android.widget.EditText>(com.pookie.game.R.id.editDeploymentId)
+            editDeploymentId?.setText(demoKey)
+            Toast.makeText(activity, "Demo key loaded. Verifying connection...", Toast.LENGTH_SHORT).show()
+            val btnTestAndSave = activity.findViewById<android.widget.Button>(com.pookie.game.R.id.btnTestAndSave)
+            btnTestAndSave?.performClick()
+        } else {
+            val progress = AlertDialog.Builder(activity)
+                .setTitle("Connecting...")
+                .setMessage("Testing connection with demo backend key...")
+                .setCancelable(false)
+                .show()
+
+            CoroutineScope(Dispatchers.Main).launch {
+                val result = withContext(Dispatchers.IO) {
+                    ServiceLocator.activeGameRepository.checkHealth()
+                }
+                progress.dismiss()
+                if (result.isSuccess) {
+                    AlertDialog.Builder(activity)
+                        .setTitle("Connected to Demo Backend")
+                        .setMessage("Successfully connected to Google Apps Script!\n\nDeployment ID:\n${demoKey.take(12)}...${demoKey.takeLast(6)}")
+                        .setPositiveButton("OK") { _, _ ->
+                            if (activity is LobbyActivity) {
+                                activity.recreate()
+                            }
+                        }
+                        .show()
+                } else {
+                    AlertDialog.Builder(activity)
+                        .setTitle("Connection Failed")
+                        .setMessage(result.exceptionOrNull()?.message ?: "Unable to reach Google Apps Script.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+            }
+        }
     }
 
     private fun resetPreferences(activity: Activity) {
