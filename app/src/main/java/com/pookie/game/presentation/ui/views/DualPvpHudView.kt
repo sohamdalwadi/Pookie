@@ -83,8 +83,8 @@ class DualPvpHudView @JvmOverloads constructor(
         }
 
         // Turn Timer Border & Countdown (10 seconds)
-        val isPlayer1Turn = player2 != null && currentTurnPlayerId == player1.id
-        val isPlayer2Turn = player2 != null && currentTurnPlayerId == player2.id
+        val isPlayer1Turn = player2 != null && (currentTurnPlayerId.equals(player1.id, ignoreCase = true) || currentTurnPlayerId.equals("HOST", ignoreCase = true))
+        val isPlayer2Turn = player2 != null && (currentTurnPlayerId.equals(player2.id, ignoreCase = true) || currentTurnPlayerId.equals("PARTNER", ignoreCase = true))
 
         if (currentTurnPlayerId != lastActiveTurnPlayerId) {
             lastActiveTurnPlayerId = currentTurnPlayerId
@@ -104,13 +104,17 @@ class DualPvpHudView @JvmOverloads constructor(
             }
         }
 
+        val isMyTurn = (currentTurnPlayerId.equals(myPlayerId, ignoreCase = true)) ||
+                (currentTurnPlayerId.equals("HOST", ignoreCase = true) && player1.id.equals(myPlayerId, ignoreCase = true)) ||
+                (currentTurnPlayerId.equals("PARTNER", ignoreCase = true) && player2?.id?.equals(myPlayerId, ignoreCase = true) == true)
+
         textTurnStatus.text = when {
             player2 == null -> "Waiting for partner..."
-            currentTurnPlayerId == myPlayerId -> "Your Turn"
+            isMyTurn -> "Your Turn"
             else -> "Partner Thinking..."
         }
         textTurnStatus.setTextColor(
-            if (currentTurnPlayerId == myPlayerId) Color.parseColor("#00D2A0") else Color.parseColor("#8E9CAE")
+            if (isMyTurn) Color.parseColor("#00D2A0") else Color.parseColor("#8E9CAE")
         )
     }
 

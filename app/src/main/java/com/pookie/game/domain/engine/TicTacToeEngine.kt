@@ -1,6 +1,9 @@
 package com.pookie.game.domain.engine
 
+import com.google.gson.annotations.SerializedName
+
 data class TicTacToeState(
+    @SerializedName(value = "board", alternate = ["grid"])
     val board: List<String?> = List(9) { null },
     val hostSymbol: String = "X",
     val partnerSymbol: String = "O",

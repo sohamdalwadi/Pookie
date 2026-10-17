@@ -149,7 +149,7 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
                     val right = left + step
                     val bottom = top + step
                     val rect = RectF(left + 6f, top + 6f, right - 6f, bottom - 6f)
-                    val paint = if (owner == hostPlayerId) hostBoxPaint else partnerBoxPaint
+                    val paint = if (isHostOwner(owner)) hostBoxPaint else partnerBoxPaint
                     canvas.drawRoundRect(rect, 12f, 12f, paint)
 
                     // Draw sequential box number for this player (1, 2, 3...)
@@ -170,7 +170,7 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
                 val lineKey = "H_${r}_${c}"
                 val owner = claimedLines[lineKey]
                 val paint = when {
-                    owner == hostPlayerId -> hostLinePaint
+                    isHostOwner(owner) -> hostLinePaint
                     owner != null -> partnerLinePaint
                     else -> unselectedLinePaint
                 }
@@ -187,7 +187,7 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
                 val lineKey = "V_${r}_${c}"
                 val owner = claimedLines[lineKey]
                 val paint = when {
-                    owner == hostPlayerId -> hostLinePaint
+                    isHostOwner(owner) -> hostLinePaint
                     owner != null -> partnerLinePaint
                     else -> unselectedLinePaint
                 }
@@ -288,4 +288,7 @@ class DotsAndBoxesBoardView @JvmOverloads constructor(
         }
         return 1
     }
+
+    private fun isHostOwner(owner: String?): Boolean =
+        owner == hostPlayerId || owner.equals("HOST", ignoreCase = true)
 }

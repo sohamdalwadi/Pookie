@@ -102,7 +102,8 @@ class GameRepositoryImpl(
             "roomCode" to roomCode,
             "playerId" to playerId,
             "move" to move,
-            "clientVersion" to clientVersion
+            "clientVersion" to clientVersion,
+            "expectedVersion" to clientVersion
         )
         if (piggybackReaction != null) {
             payload["reaction"] = piggybackReaction.code

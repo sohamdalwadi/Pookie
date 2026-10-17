@@ -224,7 +224,7 @@ class GameArenaActivity : AppCompatActivity() {
             GameType.TIC_TAC_TOE -> {
                 ticTacToeView.visibility = View.VISIBLE
                 ticTacToeView.setOnCellClickListener { cellIndex ->
-                    viewModel.makeMove(cellIndex)
+                    viewModel.makeMove(mapOf("cellIndex" to cellIndex))
                 }
             }
             GameType.DOTS_AND_BOXES -> {

@@ -437,7 +437,7 @@ function handleJoinRoom(payload) {
 function handleMakeMove(payload) {
   const roomCode = (payload.roomCode || "").toUpperCase().trim();
   const playerId = payload.playerId;
-  const expectedVersion = parseInt(payload.expectedVersion, 10);
+  const expectedVersion = parseInt(payload.expectedVersion || payload.clientVersion, 10);
   const move = payload.move || {};
 
   const lock = LockService.getScriptLock();
@@ -779,8 +779,14 @@ function handleSubmitVerdict(payload) {
  * Tic-Tac-Toe Move Reducer
  */
 function reduceTicTacToe(state, move, player) {
-  const cell = move.cellIndex;
-  if (cell < 0 || cell > 8) return { error: "Cell index must be 0 to 8." };
+  const cell = (typeof move === "number") ? move : 
+               (typeof move === "object" && move !== null && move.cellIndex !== undefined) ? parseInt(move.cellIndex, 10) : 
+               parseInt(move, 10);
+  if (isNaN(cell) || cell < 0 || cell > 8) return { error: "Cell index must be 0 to 8." };
+  
+  if (!state.grid) {
+    state.grid = Array.isArray(state.board) ? state.board : Array(9).fill(null);
+  }
   if (state.grid[cell] !== null) return { error: "Cell is already occupied." };
   if (state.winner !== null) return { error: "Game is already completed." };
 
