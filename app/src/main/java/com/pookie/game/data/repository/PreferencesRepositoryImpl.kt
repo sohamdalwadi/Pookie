@@ -27,17 +27,33 @@ class PreferencesRepositoryImpl(
     }
 
     override fun getBackendDeploymentId(): String? =
-        prefs.getString(KEY_BACKEND_ID, null)
+        prefs.getString(KEY_BACKEND_ID, null)?.takeIf { it.isNotBlank() }
 
     override fun saveBackendDeploymentId(deploymentId: String) {
-        prefs.edit().putString(KEY_BACKEND_ID, deploymentId.trim()).apply()
+        val trimmed = deploymentId.trim()
+        if (trimmed.isBlank()) {
+            prefs.edit().remove(KEY_BACKEND_ID).apply()
+        } else {
+            prefs.edit()
+                .putString(KEY_BACKEND_ID, trimmed)
+                .remove(KEY_BACKEND_URL)
+                .apply()
+        }
     }
 
     override fun getBackendUrl(): String? =
-        prefs.getString(KEY_BACKEND_URL, null)
+        prefs.getString(KEY_BACKEND_URL, null)?.takeIf { it.isNotBlank() }
 
     override fun saveBackendUrl(url: String) {
-        prefs.edit().putString(KEY_BACKEND_URL, url.trim()).apply()
+        val trimmed = url.trim()
+        if (trimmed.isBlank()) {
+            prefs.edit().remove(KEY_BACKEND_URL).apply()
+        } else {
+            prefs.edit()
+                .putString(KEY_BACKEND_URL, trimmed)
+                .remove(KEY_BACKEND_ID)
+                .apply()
+        }
     }
 
     override fun getCoupleProfile(): CoupleProfile {

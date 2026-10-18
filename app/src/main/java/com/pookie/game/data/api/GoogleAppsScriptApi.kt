@@ -32,10 +32,20 @@ class GoogleAppsScriptApi(
 
         fun sanitizeEndpoint(input: String): String {
             var cleaned = input.trim().replace("\"", "").replace("'", "")
+
+            // If it's a Google Apps Script Web App URL, extract the deployment ID
+            if (cleaned.contains("macros/s/")) {
+                val cleanId = cleaned.substringAfter("macros/s/")
+                    .substringBefore("/exec")
+                    .substringBefore("/dev")
+                    .substringBefore("?")
+                    .substringBefore("/")
+                    .trim()
+                return "https://script.google.com/macros/s/$cleanId/exec"
+            }
             
-            // If full URL
+            // If other full URL (e.g. custom mock proxy or local dev server)
             if (cleaned.startsWith("http://") || cleaned.startsWith("https://")) {
-                // If ends with /dev, warn or replace with /exec
                 if (cleaned.endsWith("/dev")) {
                     cleaned = cleaned.substringBeforeLast("/dev") + "/exec"
                 } else if (!cleaned.endsWith("/exec")) {

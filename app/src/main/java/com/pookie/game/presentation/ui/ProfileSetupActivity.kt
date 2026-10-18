@@ -3,6 +3,8 @@ package com.pookie.game.presentation.ui
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -71,6 +73,18 @@ class ProfileSetupActivity : AppCompatActivity() {
                 start()
             }
             editMyNickname.setText(viewModel.rollRandomNickname())
+        }
+
+        editMyNickname.setOnEditorActionListener { _, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_DONE ||
+                actionId == EditorInfo.IME_ACTION_GO ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
+            ) {
+                btnSaveProfile.performClick()
+                true
+            } else {
+                false
+            }
         }
 
         btnSaveProfile.setOnClickListener {

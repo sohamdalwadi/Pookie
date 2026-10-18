@@ -19,7 +19,7 @@ class SetupViewModel(
     val connectionState: StateFlow<Resource<Unit>> = _connectionState.asStateFlow()
 
     fun testAndSaveBackend(input: String) {
-        val trimmed = input.trim()
+        val trimmed = input.trim().replace("\"", "").replace("'", "")
         if (trimmed.isBlank()) {
             _connectionState.value = Resource.Error("Please enter a valid Deployment ID or Web App URL.")
             return
@@ -28,12 +28,24 @@ class SetupViewModel(
         viewModelScope.launch {
             _connectionState.value = Resource.Loading
 
-            // Save temporarily to test
-            if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            // Save configuration
+            if (trimmed.contains("macros/s/")) {
+                val extractedId = trimmed.substringAfter("macros/s/")
+                    .substringBefore("/exec")
+                    .substringBefore("/dev")
+                    .substringBefore("?")
+                    .substringBefore("/")
+                    .trim()
+                preferencesRepository.saveBackendDeploymentId(extractedId)
+            } else if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
                 preferencesRepository.saveBackendUrl(trimmed)
             } else {
-                preferencesRepository.saveBackendDeploymentId(trimmed)
+                val cleanId = trimmed.substringBefore("?").substringBefore("/").trim()
+                preferencesRepository.saveBackendDeploymentId(cleanId)
             }
+
+            // Ensure mock mode is turned off when testing/saving real backend
+            com.pookie.game.di.ServiceLocator.isMockMode = false
 
             val result = gameRepository.checkHealth()
             if (result.isSuccess) {

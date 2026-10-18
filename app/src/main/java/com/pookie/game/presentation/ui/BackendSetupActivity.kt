@@ -5,8 +5,10 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -60,14 +62,20 @@ class BackendSetupActivity : AppCompatActivity() {
         updateDebugVisibility()
 
         btnSaveAnyway.setOnClickListener {
-            val input = editDeploymentId.text.toString().trim()
+            val input = editDeploymentId.text.toString().trim().replace("\"", "").replace("'", "")
             if (input.isNotBlank()) {
-                val cleanId = if (input.startsWith("http")) {
-                    input.substringAfter("macros/s/").substringBefore("/exec").substringBefore("?")
+                val cleanId = if (input.contains("macros/s/")) {
+                    input.substringAfter("macros/s/")
+                        .substringBefore("/exec")
+                        .substringBefore("/dev")
+                        .substringBefore("?")
+                        .substringBefore("/")
+                        .trim()
                 } else {
-                    input
+                    input.substringBefore("?").substringBefore("/").trim()
                 }
                 ServiceLocator.preferencesRepository.saveBackendDeploymentId(cleanId)
+                ServiceLocator.isMockMode = false
                 Toast.makeText(this@BackendSetupActivity, "Saved Deployment ID", Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this@BackendSetupActivity, ProfileSetupActivity::class.java))
                 finish()
@@ -95,6 +103,20 @@ class BackendSetupActivity : AppCompatActivity() {
             ?: ServiceLocator.preferencesRepository.getBackendUrl()
         if (!existingId.isNullOrBlank()) {
             editDeploymentId.setText(existingId)
+        }
+
+        // Handle keyboard "Enter" or "Done" action
+        editDeploymentId.setOnEditorActionListener { _, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_DONE ||
+                actionId == EditorInfo.IME_ACTION_GO ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
+            ) {
+                val input = editDeploymentId.text.toString()
+                viewModel.testAndSaveBackend(input)
+                true
+            } else {
+                false
+            }
         }
 
         btnTestAndSave.setOnClickListener {
@@ -233,7 +255,16 @@ class BackendSetupActivity : AppCompatActivity() {
             val clip = clipboard.primaryClip?.getItemAt(0)?.text?.toString()?.trim() ?: return
 
             if ((clip.startsWith("AKfycb") || clip.contains("macros/s/")) && editDeploymentId.text.isNullOrBlank()) {
-                val cleanId = clip.substringAfter("AKfycb").let { "AKfycb$it" }.substringBefore("&").substringBefore("/").substringBefore(" ")
+                val cleanId = if (clip.contains("macros/s/")) {
+                    clip.substringAfter("macros/s/")
+                        .substringBefore("/exec")
+                        .substringBefore("/dev")
+                        .substringBefore("?")
+                        .substringBefore("/")
+                        .trim()
+                } else {
+                    clip.substringAfter("AKfycb").let { "AKfycb$it" }.substringBefore("&").substringBefore("/").substringBefore(" ")
+                }
                 editDeploymentId.setText(cleanId)
                 Toast.makeText(this, "Pasted Deployment ID from clipboard!", Toast.LENGTH_SHORT).show()
             }

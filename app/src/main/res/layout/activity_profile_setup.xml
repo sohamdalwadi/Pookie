@@ -65,7 +65,9 @@
                     android:hint="@string/hint_my_nickname"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_disabled"
-                    android:singleLine="true"
+                    android:inputType="textPersonName|textCapWords"
+                    android:imeOptions="actionDone"
+                    android:maxLines="1"
                     android:textSize="15sp" />
 
                 <ImageView

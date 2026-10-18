@@ -3,7 +3,9 @@ package com.pookie.game.presentation.ui
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -71,11 +73,11 @@ class LobbyActivity : AppCompatActivity() {
         }
 
         // Join Room Click
-        btnJoinRoom.setOnClickListener {
+        fun executeJoinRoom() {
             val rawInput = editRoomCode.text.toString().trim()
             if (rawInput.isBlank()) {
-                Toast.makeText(this, "Please enter room code", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+                Toast.makeText(this@LobbyActivity, "Please enter room code", Toast.LENGTH_SHORT).show()
+                return
             }
 
             // Extract backend ID if partner shared full payload
@@ -83,22 +85,49 @@ class LobbyActivity : AppCompatActivity() {
             if (backendMatch != null) {
                 val extractedBackendId = backendMatch.value
                 ServiceLocator.preferencesRepository.saveBackendDeploymentId(extractedBackendId)
-                Toast.makeText(this, "Partner Backend ID automatically configured!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@LobbyActivity, "Partner Backend ID automatically configured!", Toast.LENGTH_SHORT).show()
             }
 
-            // Extract and validate room code format (e.g. PK-1234 or PKABCD)
-            val codeMatch = Regex("(PK-?[A-Za-z0-9]{4}|[A-Za-z0-9]{6})", RegexOption.IGNORE_CASE).find(rawInput)
-            if (codeMatch == null) {
-                AlertDialog.Builder(this)
+            // Clean and normalize room code: supports raw 4 chars (e.g. 7J2L), PK-XXXX, PK XXXX, or full 6 chars (PK7J2L)
+            val trimmed = rawInput.replace(" ", "").replace("-", "")
+            val cleanCode = when {
+                trimmed.length == 4 && trimmed.all { it.isLetterOrDigit() } -> "PK" + trimmed.uppercase()
+                trimmed.length == 6 && trimmed.startsWith("PK", ignoreCase = true) && trimmed.all { it.isLetterOrDigit() } -> trimmed.uppercase()
+                else -> {
+                    val codeMatch = Regex("PK[- ]?([A-Za-z0-9]{4})", RegexOption.IGNORE_CASE).find(rawInput)
+                        ?: Regex("([A-Za-z0-9]{6})").find(trimmed)
+                    codeMatch?.value?.replace("-", "")?.replace(" ", "")?.uppercase()?.let {
+                        if (it.startsWith("PK")) it else "PK$it"
+                    }
+                }
+            }
+
+            if (cleanCode == null || cleanCode.length != 6) {
+                AlertDialog.Builder(this@LobbyActivity)
                     .setTitle("Invalid Room Code")
                     .setMessage("Room codes must follow the format PK-XXXX (e.g., PK-1234 or PKABCD).")
                     .setPositiveButton("OK", null)
                     .show()
-                return@setOnClickListener
+                return
             }
 
-            val cleanCode = codeMatch.value.replace("-", "").uppercase()
             viewModel.joinRoom(cleanCode)
+        }
+
+        btnJoinRoom.setOnClickListener {
+            executeJoinRoom()
+        }
+
+        editRoomCode.setOnEditorActionListener { _, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_DONE ||
+                actionId == EditorInfo.IME_ACTION_GO ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
+            ) {
+                executeJoinRoom()
+                true
+            } else {
+                false
+            }
         }
 
         btnSettings.setOnClickListener {

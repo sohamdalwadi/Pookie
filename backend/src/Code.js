@@ -426,6 +426,11 @@ function handleJoinRoom(payload) {
     const row = sheet.getRange(rowIndex, 1, 1, 15).getValues()[0];
     const room = rowToRoomObject(row);
 
+    if (room.host && room.host.id === partnerId) {
+      // Host is re-entering their own existing room
+      return jsonSuccess(room);
+    }
+
     if (room.partner && room.partner.id !== partnerId) {
       return jsonError("ROOM_FULL", "This room already has two active players.");
     }

@@ -48,7 +48,8 @@ interface PookieGameEngine<TState, TMove> {
      ```powershell
      # Read deployment ID from local.properties
      $deployId = (Get-Content local.properties | Select-String "POOKIE_DEMO_DEPLOYMENT_ID").ToString().Split("=")[1].Trim()
-     npx -y @google/clasp deploy -i $deployId -d "<description>"
+     # Redeploy in-place with constant description "Pookie Backend API" to preserve identical Deployment ID and "Anyone" access:
+     npx -y @google/clasp redeploy $deployId -V <versionNumber> -d "Pookie Backend API"
      ```
    - The deployment ID and Web App URL stay 100% constant forever, eliminating client configuration churn.
    - Always explicitly notify the user whenever backend code is pushed/updated.

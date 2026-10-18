@@ -45,16 +45,43 @@ clasp push
 
 ---
 
-### 4. Deploy as a Public Web App
-Deploy a new version of the Web App:
+### 4. Deploy or Redeploy Backend Code
+
+#### ⚠️ CRITICAL: Permanent Deployment Rule
+To keep the **same deployment ID**, **same description**, and **same settings** (such as **"Anyone"** access) in Google Apps Script using clasp, you **must redeploy or update the existing deployment** instead of creating a new one.
+
+Creating a new deployment (`clasp deploy`) will generate a new Deployment ID, breaking client installations and requiring every user to update their app configuration.
+
+#### Step 4a: Push Code
 ```bash
-clasp deploy --description "Pookie REST API v1"
+clasp push
 ```
 
-To list all existing deployments and find your Web App URL:
+#### Step 4b: List Existing Deployments
 ```bash
 clasp deployments
 ```
+
+#### Step 4c: Redeploy to the Existing Deployment ID
+Use `clasp redeploy <deploymentId> -V <versionNumber> -d "Pookie Backend API"`:
+
+> **Important:** The description is strictly constant across all redeployments: `"Pookie Backend API"`.
+
+```bash
+# Strict redeploy command format:
+clasp redeploy <deploymentId> -V <versionNumber> -d "Pookie Backend API"
+```
+
+**Canonical Redeployment Command:**
+```bash
+# Redeploy in-place with strict constant description:
+clasp redeploy <deploymentId> -V <versionNumber> -d "Pookie Backend API"
+
+# Or automatically using PowerShell reading from local.properties:
+$deployId = (Get-Content local.properties | Select-String "POOKIE_DEMO_DEPLOYMENT_ID").ToString().Split("=")[1].Trim()
+clasp redeploy $deployId -V <versionNumber> -d "Pookie Backend API"
+```
+*(Always specify `-V <versionNumber>` and `-d "Pookie Backend API"` to maintain the constant description and keep the deployment ID permanent).*
 
 ---
 

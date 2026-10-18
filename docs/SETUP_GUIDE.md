@@ -66,11 +66,16 @@ sequenceDiagram
 1. In the Apps Script editor, click the blue **Deploy** button (top right) > **New deployment**.
 2. Click the gear icon ⚙️ next to *"Select type"* and choose **Web app**.
 3. Configure deployment settings:
-   - **Description:** `Pookie REST API v1`
+   - **Description:** `Pookie Backend API`
    - **Execute as:** `Me (your-email@gmail.com)`
    - **Who has access:** `Anyone` *(Crucial: allows client communication without OAuth login barriers)*
 4. Click **Deploy**.
 5. Copy the generated **Web App URL** (e.g. `https://script.google.com/macros/s/AKfycb.../exec`).
+
+> 💡 **Subsequent Deployments via Clasp CLI:**  
+> Strictly redeploy in-place using the exact same description:  
+> `clasp redeploy <deploymentId> -V <versionNumber> -d "Pookie Backend API"`  
+> Do not create new deployments, so the Deployment ID and settings remain permanent.
 
 ---
 

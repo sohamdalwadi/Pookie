@@ -39,7 +39,8 @@ object ServiceLocator {
     val googleAppsScriptApi: GoogleAppsScriptApi by lazy {
         GoogleAppsScriptApi(
             baseUrlProvider = {
-                preferencesRepository.getBackendUrl() ?: preferencesRepository.getBackendDeploymentId()
+                preferencesRepository.getBackendDeploymentId()?.takeIf { it.isNotBlank() }
+                    ?: preferencesRepository.getBackendUrl()?.takeIf { it.isNotBlank() }
             }
         )
     }
