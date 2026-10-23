@@ -42,3 +42,8 @@ config.json
 .clasprc.json
 **/.clasp.json
 **/.clasprc.json
+
+# Web App build & modules
+web/node_modules/
+web/dist/
+

@@ -1,0 +1,348 @@
+/* ==========================================================================
+   GAME SPECIFIC STYLES
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. TIC-TAC-TOE
+   -------------------------------------------------------------------------- */
+.ttt-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+  margin: 1.5rem auto;
+  aspect-ratio: 1 / 1;
+}
+
+.ttt-cell {
+  background: rgba(30, 22, 48, 0.7);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.2rem;
+  font-weight: 800;
+  transition: all var(--transition-fast);
+}
+
+.ttt-cell:hover:not(:disabled) {
+  background: var(--glass-bg-hover);
+  border-color: var(--primary);
+  transform: scale(1.03);
+}
+
+.ttt-cell.mark-x {
+  color: var(--primary);
+  text-shadow: 0 0 20px var(--primary-glow);
+}
+
+.ttt-cell.mark-o {
+  color: var(--secondary);
+  text-shadow: 0 0 20px var(--secondary-glow);
+}
+
+.ttt-cell.winning-cell {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: var(--accent-gold);
+  animation: turnPulse 1.2s infinite ease-in-out;
+}
+
+/* --------------------------------------------------------------------------
+   2. DOTS AND BOXES (Dynamic 3x3, 4x4, 5x5 Grid)
+   -------------------------------------------------------------------------- */
+.dnb-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  margin: 1rem auto;
+  position: relative;
+}
+
+.dnb-board {
+  position: relative;
+  background: rgba(20, 15, 34, 0.8);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.dnb-row {
+  display: flex;
+  align-items: center;
+}
+
+.dnb-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  z-index: 5;
+  flex-shrink: 0;
+}
+
+.dnb-line-h {
+  height: 12px;
+  width: 60px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin: 0 -2px;
+  z-index: 4;
+}
+
+.dnb-line-h:hover:not(.claimed) {
+  background: rgba(255, 78, 120, 0.6);
+  box-shadow: 0 0 12px var(--primary);
+}
+
+.dnb-line-v {
+  width: 12px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin: -2px 0;
+  z-index: 4;
+}
+
+.dnb-line-v:hover:not(.claimed) {
+  background: rgba(255, 78, 120, 0.6);
+  box-shadow: 0 0 12px var(--primary);
+}
+
+.dnb-line-h.claimed.host, .dnb-line-v.claimed.host {
+  background: var(--primary);
+  box-shadow: 0 0 14px var(--primary-glow);
+  cursor: default;
+}
+
+.dnb-line-h.claimed.partner, .dnb-line-v.claimed.partner {
+  background: var(--secondary);
+  box-shadow: 0 0 14px var(--secondary-glow);
+  cursor: default;
+}
+
+.dnb-box {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.15rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-normal);
+}
+
+.dnb-box.claimed.host {
+  background: rgba(255, 78, 120, 0.25);
+  color: var(--primary);
+  border: 1px dashed var(--primary);
+  box-shadow: inset 0 0 12px var(--primary-subtle);
+}
+
+.dnb-box.claimed.partner {
+  background: rgba(139, 92, 246, 0.25);
+  color: var(--secondary);
+  border: 1px dashed var(--secondary);
+  box-shadow: inset 0 0 12px var(--secondary-subtle);
+}
+
+/* --------------------------------------------------------------------------
+   3. COUPLES QUIZ
+   -------------------------------------------------------------------------- */
+.quiz-container {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.quiz-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.quiz-category-tag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--primary-subtle);
+  color: var(--primary);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.85rem;
+}
+
+.quiz-prompt-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-white);
+  line-height: 1.4;
+}
+
+.quiz-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.quiz-option-btn {
+  background: rgba(26, 20, 42, 0.75);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+  transition: all var(--transition-fast);
+  color: var(--text-primary);
+}
+
+.quiz-option-btn:hover:not(:disabled) {
+  background: var(--glass-bg-hover);
+  border-color: var(--primary);
+  transform: translateX(4px);
+}
+
+.quiz-option-btn.selected {
+  background: var(--primary-subtle);
+  border-color: var(--primary);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.quiz-option-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: var(--primary);
+  border: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.quiz-option-btn.selected .quiz-option-badge {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* --------------------------------------------------------------------------
+   4. SOUL SYNC (Bonding Blind Answers & Verdict)
+   -------------------------------------------------------------------------- */
+.soulsync-container {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.soulsync-prompt-card {
+  background: linear-gradient(135deg, rgba(42, 20, 56, 0.7), rgba(20, 15, 34, 0.9));
+  border: 1px solid var(--primary-glow);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(255, 78, 120, 0.15);
+}
+
+.soulsync-round-tag {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.soulsync-prompt-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-white);
+}
+
+.soulsync-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.soulsync-input {
+  background: rgba(13, 11, 24, 0.8);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  color: #fff;
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+}
+
+.soulsync-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* Side by side comparison cards */
+.soulsync-reveal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.reveal-answer-card {
+  background: rgba(26, 20, 42, 0.8);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.reveal-answer-card.host-side {
+  border-color: var(--primary);
+}
+
+.reveal-answer-card.partner-side {
+  border-color: var(--secondary);
+}
+
+.reveal-author {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+}
+
+.reveal-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-white);
+  word-break: break-word;
+}
+
+.verdict-actions-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}

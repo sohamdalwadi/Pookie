@@ -1,0 +1,99 @@
+/* Micro-animations and Keyframes */
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px var(--primary-glow);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 28px var(--primary-glow);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes turnPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes floatEmoji {
+  0% {
+    transform: translateY(0) scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1.2) rotate(-8deg);
+  }
+  80% {
+    opacity: 0.9;
+    transform: translateY(-160px) scale(1.3) rotate(8deg);
+  }
+  100% {
+    transform: translateY(-240px) scale(1) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.anim-pulse {
+  animation: pulseGlow 2.5s infinite;
+}
+
+.anim-turn {
+  animation: turnPulse 1.8s infinite ease-in-out;
+}
+
+.anim-entrance {
+  animation: cardEntrance 0.35s var(--transition-spring) forwards;
+}
+
+.anim-pop {
+  animation: popIn 0.3s var(--transition-spring) forwards;
+}
+
+/* Floating Reaction Container */
+.reaction-floating-stage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.floating-reaction-item {
+  position: absolute;
+  font-size: 3.5rem;
+  animation: floatEmoji 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}

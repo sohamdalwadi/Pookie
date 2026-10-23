@@ -25,6 +25,14 @@ jobs:
           node --check backend/src/Code.js
           echo "backend/src/Code.js passed syntax verification."
 
+      - name: Verify Web Build
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+          echo "Pookie web bundle compiled successfully."
+
+
   build-and-test:
     name: Android Build & Unit Tests
     runs-on: ubuntu-latest

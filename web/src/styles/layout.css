@@ -1,0 +1,463 @@
+/* Layout and Component Structure */
+
+#app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Glass Header */
+.app-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  background: rgba(13, 11, 24, 0.7);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-white);
+  letter-spacing: -0.02em;
+}
+
+.brand-badge .heart-logo {
+  font-size: 1.35rem;
+  animation: turnPulse 2s infinite ease-in-out;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.icon-btn {
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.icon-btn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.room-badge {
+  background: var(--primary-subtle);
+  border: 1px solid var(--primary-glow);
+  color: var(--primary);
+  font-weight: 700;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.room-badge:active {
+  transform: scale(0.96);
+}
+
+/* Health check Status Indicator Pill */
+.health-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  transition: all var(--transition-fast);
+  color: var(--text-muted);
+}
+
+.health-pill:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.health-pill .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.health-pill.online {
+  color: #a7f3d0;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.health-pill.online .status-dot {
+  background: var(--accent-emerald);
+  box-shadow: 0 0 8px var(--accent-emerald);
+}
+
+.health-pill.checking {
+  color: #fde68a;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.health-pill.checking .status-dot {
+  background: var(--accent-gold);
+  box-shadow: 0 0 8px var(--accent-gold);
+  animation: turnPulse 1s infinite alternate;
+}
+
+.health-pill.offline {
+  color: #fecdd3;
+  border-color: rgba(244, 63, 94, 0.3);
+}
+
+.health-pill.offline .status-dot {
+  background: var(--accent-rose);
+  box-shadow: 0 0 8px var(--accent-rose);
+}
+
+
+/* Main Content Stage */
+.main-stage {
+  flex: 1;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* Glass Card */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  padding: 1.5rem;
+}
+
+/* Primary and Outline Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), #e11d48);
+  color: #fff;
+  font-weight: 700;
+  padding: 0.85rem 1.6rem;
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 18px var(--primary-glow);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  text-wrap: nowrap;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-hover), #f43f5e);
+  box-shadow: 0 6px 24px var(--primary-glow);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  font-weight: 600;
+  padding: 0.85rem 1.4rem;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  text-wrap: nowrap;
+}
+
+
+.btn-secondary:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+/* Turn Banner Pill */
+.turn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0.5rem 0 1rem 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.turn-pill.my-turn {
+  background: linear-gradient(135deg, var(--primary-subtle), rgba(255, 78, 120, 0.25));
+  border: 1px solid var(--primary);
+  color: #ff8ea7;
+}
+
+.turn-pill.partner-turn {
+  background: linear-gradient(135deg, var(--secondary-subtle), rgba(139, 92, 246, 0.25));
+  border: 1px solid var(--secondary);
+  color: #c4b5fd;
+}
+
+/* Player Score Header for Mobile & Desktop */
+.scoreboard-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+.player-card {
+  flex: 1;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all var(--transition-normal);
+}
+
+.player-card.active-turn {
+  border-color: var(--primary);
+  box-shadow: 0 0 16px var(--primary-glow);
+}
+
+.player-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: var(--bg-dark-alt);
+  border: 2px solid var(--primary);
+}
+
+.player-card.partner .player-avatar {
+  border-color: var(--secondary);
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.player-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-white);
+}
+
+.player-role-tag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.player-score {
+  margin-left: auto;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+/* Versus badge */
+.vs-badge {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--text-subtle);
+  background: var(--bg-dark);
+  border-radius: var(--radius-full);
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--glass-border);
+}
+
+/* Fixed Bottom Reaction Bar */
+.bottom-reactions-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  padding: 0 1rem;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgba(13, 11, 24, 0.85);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  z-index: 100;
+}
+
+.reaction-btn {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  transition: all var(--transition-fast);
+}
+
+.reaction-btn:hover {
+  transform: translateY(-4px) scale(1.15);
+  background: var(--glass-bg-hover);
+  border-color: var(--primary);
+  box-shadow: 0 6px 15px var(--primary-glow);
+}
+
+.reaction-btn:active {
+  transform: scale(0.95);
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-dark-alt);
+  border: 1px solid var(--glass-border-hover);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  text-align: center;
+  box-shadow: var(--glass-shadow);
+}
+
+/* Desktop 3-Column Layout */
+@media (min-width: 860px) {
+  .game-container-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr 240px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .scoreboard-bar {
+    display: none; /* In desktop, side panels show players */
+  }
+
+  .desktop-player-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 859px) {
+  .desktop-player-panel {
+    display: none;
+  }
+}
+
+/* Game Picker & Size Selection */
+.game-pick-btn {
+  background: rgba(26, 20, 42, 0.7);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.game-pick-btn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.game-pick-btn.active {
+  background: var(--primary-subtle);
+  border-color: var(--primary);
+  box-shadow: 0 0 16px var(--primary-glow);
+  color: #fff;
+}
+
+.size-btn {
+  flex: 1;
+  background: rgba(26, 20, 42, 0.7);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.size-btn:hover {
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.size-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+

@@ -27,6 +27,23 @@
 | **❌⭕ Tic-Tac-Toe** | Turn-Based | The classic 3x3 showdown with delightful couple touches and animations. | [Read Spec](docs/games/TIC_TAC_TOE.md) |
 | **🟦 Dots & Boxes** | Turn-Based | Tactical edge-connecting game where capturing a box grants an extra turn. | [Read Spec](docs/games/DOTS_AND_BOXES.md) |
 | **💖 Couples Quiz** | Simultaneous | Blind icebreaker questions with simultaneous reveals to spark deep conversations. | [Read Spec](docs/games/COUPLES_QUIZ.md) |
+| **✨ SoulSync** | Simultaneous | Freeform blind-matching bonding quiz with real-time mutual verdict scoring. | [Read Spec](docs/games/SOUL_SYNC.md) |
+
+---
+
+## 🌐 Web Client & GitHub Pages
+
+Pookie is available directly in the browser across **laptops, desktops, and mobile devices**:
+- **Zero Configuration:** Players never have to enter deployment keys or backend IDs. The permanent demo deployment key is automatically injected at build time from GitHub Actions repository secret `POOKIE_DEMO_DEPLOYMENT_ID`.
+- **Responsive Experience:** Fullscreen mobile-touch layout (`100dvh`) with native Web Share API support + 3-column laptop dashboard with live QR code pairing for your partner.
+- **Local Development:**
+  ```bash
+  cd web
+  npm install
+  npm run dev
+  ```
+  *(Vite will automatically load `POOKIE_DEMO_DEPLOYMENT_ID` from your `local.properties` for seamless local testing!)*
+
 
 ---
 
