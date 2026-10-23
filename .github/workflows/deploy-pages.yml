@@ -2,7 +2,8 @@ name: Deploy Pookie Web to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
+
     paths:
       - 'web/**'
       - '.github/workflows/deploy-pages.yml'
